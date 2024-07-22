@@ -20,6 +20,8 @@ export class NextFavoriteStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: NextFavoriteProps) {
     super(scope, id, props);
 
+    const env = scope.node.tryGetContext("env");
+
     // Define the Lambda function resource
     const myFunction = new lambda.Function(this, "HelloWorldFunction", {
       runtime: lambda.Runtime.NODEJS_20_X, // Provide any supported Node.js runtime
@@ -48,6 +50,7 @@ export class NextFavoriteStack extends cdk.Stack {
       selfSignUpEnabled: true,
       signInAliases: {
         email: true,
+        username: true,
       },
       autoVerify: {
         email: true,
@@ -62,12 +65,20 @@ export class NextFavoriteStack extends cdk.Stack {
         emailSubject: "Your Verification Code",
         emailBody: "Please use the following code to verify your email: {####}",
       },
-      removalPolicy: cdk.RemovalPolicy.DESTROY, // Only for development,
+      removalPolicy:
+        env === "dev" ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN,
+
       passwordPolicy: {
         minLength: 8,
         requireLowercase: true,
         requireUppercase: true,
         requireDigits: true,
+      },
+      standardAttributes: {
+        email: {
+          required: true,
+          mutable: true,
+        },
       },
     });
 
