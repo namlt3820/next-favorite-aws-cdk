@@ -3,6 +3,8 @@ import { Construct } from "constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as path from "path";
 
 // import * as cognito from "aws-cdk-lib/aws-cognito";
 
@@ -45,6 +47,18 @@ export class NextFavoriteStack extends cdk.Stack {
       value: myFunctionUrl.url,
     });
 
+    // Create Lambda Function
+    const postConfirmation = new lambda.Function(this, "PostConfirmation", {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: "handler.handler",
+      code: lambda.Code.fromAsset(
+        path.join(__dirname, "../lambdas/post-confirmation/dist")
+      ), // Path to your Lambda code
+      environment: {
+        TABLE_NAME: `NextFavorite-${env}-Users`, // Pass the table name as an environment variable
+      },
+    });
+
     // Create a Cognito User Pool
     const userPool = new cognito.UserPool(this, props.userPoolName, {
       selfSignUpEnabled: true,
@@ -79,6 +93,9 @@ export class NextFavoriteStack extends cdk.Stack {
           required: true,
           mutable: true,
         },
+      },
+      lambdaTriggers: {
+        postConfirmation,
       },
     });
 
@@ -126,5 +143,50 @@ export class NextFavoriteStack extends cdk.Stack {
       value: appClient.userPoolClientId,
     });
     new cdk.CfnOutput(this, "CognitoDomain", { value: domain.domainName });
+
+    // DynamoDB
+    const usersTable = new dynamodb.Table(this, "Users", {
+      tableName: `NextFavorite-${env}-Users`,
+      partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
+      billingMode: cdk.aws_dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy:
+        env === "dev" ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN,
+    });
+    new cdk.CfnOutput(this, "UsersTableArn", { value: usersTable.tableArn });
+
+    // const recommendSourcesTable = new dynamodb.Table(this, "RecommendSources", {
+    //   partitionKey: { name: "url", type: dynamodb.AttributeType.STRING },
+    //   removalPolicy:
+    //     env === "dev" ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN,
+    // });
+
+    // const userFavoritesTable = new dynamodb.Table(this, "UserFavorites", {
+    //   partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
+    //   sortKey: { name: "movieId", type: dynamodb.AttributeType.STRING },
+    //   removalPolicy:
+    //     env === "dev" ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN,
+    // });
+
+    // userFavoritesTable.addGlobalSecondaryIndex({
+    //   indexName: "SourceUserIndex",
+    //   partitionKey: { name: "sourceId", type: dynamodb.AttributeType.STRING },
+    //   sortKey: { name: "userId", type: dynamodb.AttributeType.STRING },
+    // });
+
+    // const userExclusionsTable = new dynamodb.Table(this, "UserExclusions", {
+    //   partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
+    //   sortKey: { name: "movieId", type: dynamodb.AttributeType.STRING },
+    //   removalPolicy:
+    //     env === "dev" ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN,
+    // });
+
+    // userExclusionsTable.addGlobalSecondaryIndex({
+    //   indexName: "SourceUserIndex",
+    //   partitionKey: { name: "sourceId", type: dynamodb.AttributeType.STRING },
+    //   sortKey: { name: "userId", type: dynamodb.AttributeType.STRING },
+    // });
+
+    // Grant Lambda permissions to write to DynamoDB
+    usersTable.grantWriteData(postConfirmation);
   }
 }
