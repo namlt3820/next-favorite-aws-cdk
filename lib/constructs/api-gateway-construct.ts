@@ -16,6 +16,15 @@ export const apiGatewayConstruct = ({
     restApiName: apiGatewayId,
   });
 
+  const deployment = new apigateway.Deployment(scope, `NF-Deployment-${env}`, {
+    api: apiGateway,
+  });
+
+  new apigateway.Stage(scope, `NF-Stage-${env}`, {
+    deployment: deployment,
+    stageName: env,
+  });
+
   const oauthTokenIntegration = new apigateway.LambdaIntegration(
     oauthTokenFunction
   );
