@@ -8,7 +8,9 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "deploy:dev": "./build-lambdas.sh && cdk deploy -c env=dev",
+    "deploy:prod": "./build-lambdas.sh && cdk deploy -c env=prod"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

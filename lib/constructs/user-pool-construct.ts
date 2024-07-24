@@ -20,10 +20,9 @@ export const userPoolConstruct = ({
   const callbackUrl = process.env.AWS_CALLBACK_URL!;
   const logoutUrl = process.env.AWS_LOGOUT_URL!;
   const certificateArn = process.env.AWS_CERTIFICATE_ARN!;
-  const userPoolName = `NextFavoriteUserPool-${env}`;
 
   // Create a Cognito User Pool
-  const userPool = new cognito.UserPool(scope, userPoolName, {
+  const userPool = new cognito.UserPool(scope, `NF-UserPool-${env}`, {
     selfSignUpEnabled: true,
     signInAliases: {
       email: true,
@@ -61,12 +60,13 @@ export const userPoolConstruct = ({
   });
 
   // Add an App Client
-  const appClient = userPool.addClient("NextFavorite", {
-    userPoolClientName: "Next Favorite",
+  const appClientId = `NF-AppClient-${env}`;
+  const appClient = userPool.addClient(appClientId, {
+    userPoolClientName: appClientId,
     authFlows: {
       userSrp: true,
     },
-    generateSecret: false,
+    generateSecret: true,
     oAuth: {
       flows: {
         authorizationCodeGrant: true, // Enables the Authorization Code Grant flow
@@ -89,7 +89,7 @@ export const userPoolConstruct = ({
   );
 
   // Add a domain for the hosted UI
-  const domain = userPool.addDomain("NextFavoriteDomain", {
+  const domain = userPool.addDomain(`NF-UserPoolDomain-${env}`, {
     customDomain: {
       domainName,
       certificate,
@@ -97,9 +97,17 @@ export const userPoolConstruct = ({
   });
 
   // Outputs
-  new cdk.CfnOutput(scope, "UserPoolId", { value: userPool.userPoolId });
-  new cdk.CfnOutput(scope, "AppClientId", {
+  new cdk.CfnOutput(scope, `NF-UserPoolId-${env}`, {
+    value: userPool.userPoolId,
+  });
+  new cdk.CfnOutput(scope, `NF-AppClientId-${env}`, {
     value: appClient.userPoolClientId,
   });
-  new cdk.CfnOutput(scope, "CognitoDomain", { value: domain.domainName });
+  new cdk.CfnOutput(scope, `NF-UserPoolDomainName-${env}`, {
+    value: domain.domainName,
+  });
+
+  return {
+    appClient,
+  };
 };

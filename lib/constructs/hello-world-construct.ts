@@ -9,10 +9,13 @@ export const helloWorldConstruct = ({
   scope: Construct;
   env: string;
 }) => {
-  const helloWorldFunction = new lambda.Function(scope, "HelloWorldFunction", {
-    runtime: lambda.Runtime.NODEJS_20_X,
-    handler: "index.handler",
-    code: lambda.Code.fromInline(`
+  const helloWorldFunction = new lambda.Function(
+    scope,
+    `NF-HelloWorldFunction-${env}`,
+    {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: "index.handler",
+      code: lambda.Code.fromInline(`
             exports.handler = async function(event) {
               return {
                 statusCode: 200,
@@ -20,13 +23,14 @@ export const helloWorldConstruct = ({
               };
             };
           `),
-  });
+    }
+  );
 
   const helloWorldFunctionUrl = helloWorldFunction.addFunctionUrl({
     authType: lambda.FunctionUrlAuthType.NONE,
   });
 
-  new cdk.CfnOutput(scope, "HelloWorldFunctionUrl", {
+  new cdk.CfnOutput(scope, `NF-HelloWorldFunctionUrl-${env}`, {
     value: helloWorldFunctionUrl.url,
   });
 };

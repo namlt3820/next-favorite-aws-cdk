@@ -1,17 +1,18 @@
-import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 
 export const postConfirmationConstruct = ({
   scope,
   tableName,
+  env,
 }: {
   scope: Construct;
   tableName: string;
+  env: string;
 }) => {
   const postConfirmationFunction = new lambda.Function(
     scope,
-    "PostConfirmationFunction",
+    `NF-PostConfirmationFunction-${env}`,
     {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "handler.handler",

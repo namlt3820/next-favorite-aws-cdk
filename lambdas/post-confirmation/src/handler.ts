@@ -12,7 +12,9 @@ const dynamoClient = new DynamoDBClient({ region: "ap-southeast-1" });
 // Create a DynamoDB DocumentClient
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
-exports.handler = async (event: PostConfirmationConfirmSignUpTriggerEvent) => {
+export const handler = async (
+  event: PostConfirmationConfirmSignUpTriggerEvent
+) => {
   console.log("Event:", JSON.stringify(event, null, 2));
 
   const userName = event.userName;
