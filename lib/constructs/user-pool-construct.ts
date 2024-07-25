@@ -65,6 +65,7 @@ export const userPoolConstruct = ({
     userPoolClientName: appClientId,
     authFlows: {
       userSrp: true,
+      userPassword: true,
     },
     generateSecret: true,
     oAuth: {
@@ -84,7 +85,7 @@ export const userPoolConstruct = ({
   // Reference an existing ACM certificate by its ARN
   const certificate = acm.Certificate.fromCertificateArn(
     scope,
-    "Certificate",
+    `NF-UserPoolCertificate-${env}`,
     certificateArn
   );
 

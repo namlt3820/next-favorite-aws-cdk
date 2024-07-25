@@ -7,6 +7,7 @@ import { dynamoTableConstruct } from "./constructs/dynamo-table-construct";
 import { oauthTokenConstruct } from "./constructs/oauth-token-construct";
 import { apiGatewayConstruct } from "./constructs/api-gateway-construct";
 import { secretsManagerConstruct } from "./constructs/secrets-manager-construct";
+import { loginConstruct } from "./constructs/login-construct";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -23,47 +24,57 @@ export class NextFavoriteStack extends cdk.Stack {
     // DynamoDB Table construct
     const { userTable } = dynamoTableConstruct({
       scope: this,
-      removalPolicy,
       env,
+      removalPolicy,
     });
 
     // Post Confirmation construct
     const postConfirmationFunction = postConfirmationConstruct({
       scope: this,
-      tableName: userTable.tableName,
       env,
+      tableName: userTable.tableName,
     });
     userTable.grantWriteData(postConfirmationFunction);
 
     // User Pool construct
     const { appClient } = userPoolConstruct({
       scope: this,
+      env,
       postConfirmationFunction,
       removalPolicy,
-      env,
     });
 
     // Secrets Manager construct
     const { cognitoAppClientSecret } = secretsManagerConstruct({
       scope: this,
-      appClientSecret: appClient.userPoolClientSecret,
       env,
+      appClientSecret: appClient.userPoolClientSecret,
     });
 
     // OAuth Token construct
     const { oauthTokenFunction } = oauthTokenConstruct({
       scope: this,
-      clientId: appClient.userPoolClientId,
       env,
+      clientId: appClient.userPoolClientId,
       secretName: cognitoAppClientSecret.secretName,
     });
     cognitoAppClientSecret.grantRead(oauthTokenFunction);
 
+    // Login construct
+    const { loginFunction } = loginConstruct({
+      scope: this,
+      env,
+      clientId: appClient.userPoolClientId,
+      secretName: cognitoAppClientSecret.secretName,
+    });
+    cognitoAppClientSecret.grantRead(loginFunction);
+
     // API Gateway construct
     apiGatewayConstruct({
       scope: this,
-      oauthTokenFunction,
       env,
+      oauthTokenFunction,
+      loginFunction,
     });
   }
 }
