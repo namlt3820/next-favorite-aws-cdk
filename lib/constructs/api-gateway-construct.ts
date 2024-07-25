@@ -7,12 +7,14 @@ export const apiGatewayConstruct = ({
   oauthTokenFunction,
   loginFunction,
   signupFunction,
+  userConfirmationFunction,
   env,
 }: {
   scope: Construct;
   oauthTokenFunction: lambda.Function;
   loginFunction: lambda.Function;
   signupFunction: lambda.Function;
+  userConfirmationFunction: lambda.Function;
   env: string;
 }) => {
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -67,6 +69,33 @@ export const apiGatewayConstruct = ({
               email: { type: apigateway.JsonSchemaType.STRING },
             },
             required: ["username", "password", "email"],
+          },
+        }
+      ),
+    },
+  });
+
+  // route verify
+  const userConfirmationSource = authResource.addResource("verify");
+  const userConfirmationIntegration = new apigateway.LambdaIntegration(
+    userConfirmationFunction
+  );
+  userConfirmationSource.addMethod("POST", userConfirmationIntegration, {
+    requestValidator,
+    requestModels: {
+      "application/json": new apigateway.Model(
+        scope,
+        `NF-UserConfirmationRequestModel-${env}`,
+        {
+          restApi: apiGateway,
+          contentType: "application/json",
+          schema: {
+            type: apigateway.JsonSchemaType.OBJECT,
+            properties: {
+              username: { type: apigateway.JsonSchemaType.STRING },
+              confirmationCode: { type: apigateway.JsonSchemaType.STRING },
+            },
+            required: ["username", "confirmationCode"],
           },
         }
       ),
