@@ -1,8 +1,8 @@
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import {
   CognitoIdentityProviderClient,
-  InitiateAuthCommand,
-  InitiateAuthCommandInput,
+  SignUpCommand,
+  SignUpCommandInput,
 } from "@aws-sdk/client-cognito-identity-provider";
 import {
   SecretsManagerClient,
@@ -41,7 +41,7 @@ const calculateSecretHash = (
 export const handler = async (
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResult> => {
-  const { username, password } = JSON.parse(event.body || "{}");
+  const { username, password, email } = JSON.parse(event.body || "{}");
   const clientId = process.env.CLIENT_ID || "";
 
   const secretName = process.env.SECRET_NAME;
@@ -58,28 +58,31 @@ export const handler = async (
   const secretHash = calculateSecretHash(username, clientId, secretString);
 
   try {
-    const params: InitiateAuthCommandInput = {
-      AuthFlow: "USER_PASSWORD_AUTH",
+    const params: SignUpCommandInput = {
       ClientId: clientId,
-      AuthParameters: {
-        USERNAME: username,
-        PASSWORD: password,
-        SECRET_HASH: secretHash,
-      },
+      Password: password,
+      Username: username,
+      UserAttributes: [{ Name: "email", Value: email }],
+      SecretHash: secretHash,
     };
 
-    const command = new InitiateAuthCommand(params);
+    const command = new SignUpCommand(params);
 
-    const data = await client.send(command);
+    await client.send(command);
     return {
       statusCode: 200,
-      body: JSON.stringify(data.AuthenticationResult),
+      body: JSON.stringify({
+        message:
+          "User created successfully. Verification email sent. Please check your inbox.",
+      }),
     };
   } catch (error) {
     console.log({ error });
     return {
       statusCode: 400,
-      body: JSON.stringify({ message: "Login error" }),
+      body: JSON.stringify({
+        message: "User creation failed.",
+      }),
     };
   }
 };

@@ -6,11 +6,13 @@ export const apiGatewayConstruct = ({
   scope,
   oauthTokenFunction,
   loginFunction,
+  signupFunction,
   env,
 }: {
   scope: Construct;
   oauthTokenFunction: lambda.Function;
   loginFunction: lambda.Function;
+  signupFunction: lambda.Function;
   env: string;
 }) => {
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -21,6 +23,13 @@ export const apiGatewayConstruct = ({
       dataTraceEnabled: true,
     },
     cloudWatchRole: true,
+  });
+
+  const requestValidatorId = `NF-RequestValidator-${env}`;
+  const requestValidator = apiGateway.addRequestValidator(requestValidatorId, {
+    requestValidatorName: requestValidatorId,
+    validateRequestBody: true,
+    validateRequestParameters: true,
   });
 
   // route auth
@@ -38,12 +47,34 @@ export const apiGatewayConstruct = ({
   const loginIntegration = new apigateway.LambdaIntegration(loginFunction);
   loginResource.addMethod("POST", loginIntegration);
 
-  const deployment = new apigateway.Deployment(scope, `NF-Deployment-${env}`, {
-    api: apiGateway,
+  // route signup
+  const signupSource = authResource.addResource("signup");
+  const signupIntegration = new apigateway.LambdaIntegration(signupFunction);
+  signupSource.addMethod("POST", signupIntegration, {
+    requestValidator,
+    requestModels: {
+      "application/json": new apigateway.Model(
+        scope,
+        `NF-SignupRequestModel-${env}`,
+        {
+          restApi: apiGateway,
+          contentType: "application/json",
+          schema: {
+            type: apigateway.JsonSchemaType.OBJECT,
+            properties: {
+              username: { type: apigateway.JsonSchemaType.STRING },
+              password: { type: apigateway.JsonSchemaType.STRING },
+              email: { type: apigateway.JsonSchemaType.STRING },
+            },
+            required: ["username", "password", "email"],
+          },
+        }
+      ),
+    },
   });
 
   new apigateway.Stage(scope, `NF-Stage-${env}`, {
-    deployment: deployment,
+    deployment: apiGateway.latestDeployment!,
     stageName: env,
   });
 

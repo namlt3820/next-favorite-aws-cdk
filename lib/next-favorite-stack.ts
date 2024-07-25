@@ -8,6 +8,7 @@ import { oauthTokenConstruct } from "./constructs/oauth-token-construct";
 import { apiGatewayConstruct } from "./constructs/api-gateway-construct";
 import { secretsManagerConstruct } from "./constructs/secrets-manager-construct";
 import { loginConstruct } from "./constructs/login-construct";
+import { signupConstruct } from "./constructs/signup-construct";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -69,12 +70,22 @@ export class NextFavoriteStack extends cdk.Stack {
     });
     cognitoAppClientSecret.grantRead(loginFunction);
 
+    // Signup construct
+    const { signupFunction } = signupConstruct({
+      scope: this,
+      env,
+      clientId: appClient.userPoolClientId,
+      secretName: cognitoAppClientSecret.secretName,
+    });
+    cognitoAppClientSecret.grantRead(signupFunction);
+
     // API Gateway construct
     apiGatewayConstruct({
       scope: this,
       env,
       oauthTokenFunction,
       loginFunction,
+      signupFunction,
     });
   }
 }
