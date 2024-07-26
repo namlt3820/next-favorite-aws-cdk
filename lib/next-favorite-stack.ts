@@ -12,6 +12,7 @@ import { signupConstruct } from "./constructs/signup-construct";
 import { userConfirmationConstruct } from "./constructs/user-confirmation-construct";
 import { iamConstruct } from "./constructs/iam-construct";
 import { createRecommendSourceConstruct } from "./constructs/create-recommend-source-construct";
+import { checkAdminGroupConstruct } from "./constructs/check-admin-group-construct";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -40,21 +41,21 @@ export class NextFavoriteStack extends cdk.Stack {
     });
     userTable.grantWriteData(postConfirmationFunction);
 
-    // IAM construct
-    // const { userRole, adminRole } = iamConstruct({
-    //   scope: this,
-    //   env,
-    //   recommendTableArn: recommendSourceTable.tableArn,
-    // });
-
     // User Pool construct
-    const { appClient } = userPoolConstruct({
+    const { appClient, userPool } = userPoolConstruct({
       scope: this,
       env,
       postConfirmationFunction,
       removalPolicy,
       // userRole,
       // adminRole,
+    });
+
+    // IAM construct
+    const { checkAdminGroupRole } = iamConstruct({
+      scope: this,
+      env,
+      userPoolId: userPool.userPoolId,
     });
 
     // Secrets Manager construct
@@ -108,6 +109,14 @@ export class NextFavoriteStack extends cdk.Stack {
     });
     recommendSourceTable.grantWriteData(createRecommendSourceFunction);
 
+    // Check Admin Group construct
+    const { checkAdminGroupFunction } = checkAdminGroupConstruct({
+      scope: this,
+      env,
+      userPoolId: userPool.userPoolId,
+      role: checkAdminGroupRole,
+    });
+
     // API Gateway construct
     apiGatewayConstruct({
       scope: this,
@@ -117,6 +126,7 @@ export class NextFavoriteStack extends cdk.Stack {
       signupFunction,
       userConfirmationFunction,
       createRecommendSourceFunction,
+      checkAdminGroupFunction,
     });
   }
 }

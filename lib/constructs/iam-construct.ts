@@ -1,47 +1,41 @@
-import { Role, ServicePrincipal, PolicyStatement } from "aws-cdk-lib/aws-iam";
+import {
+  Role,
+  ServicePrincipal,
+  PolicyStatement,
+  ManagedPolicy,
+} from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
+import * as cdk from "aws-cdk-lib";
 
 export const iamConstruct = ({
   scope,
   env,
-  recommendTableArn,
+  userPoolId,
 }: {
   scope: Construct;
   env: string;
-  recommendTableArn: string;
+  userPoolId: string;
 }) => {
-  // admin role
-  const adminRole = new Role(scope, `NF-AdminRole-${env}`, {
-    assumedBy: new ServicePrincipal("cognito-idp.amazonaws.com"),
+  const checkAdminGroupRole = new Role(scope, `NF-CheckAdminGroupRole-${env}`, {
+    assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
   });
 
-  adminRole.addToPolicy(
+  checkAdminGroupRole.addToPolicy(
     new PolicyStatement({
-      actions: [
-        "dynamodb:PutItem",
-        "dynamodb:UpdateItem",
-        "dynamodb:DeleteItem",
-        "dynamodb:Scan",
-        "dynamodb:Query",
+      actions: ["cognito-idp:AdminListGroupsForUser"],
+      resources: [
+        `arn:aws:cognito-idp:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:userpool/${userPoolId}`,
       ],
-      resources: [recommendTableArn],
     })
   );
 
-  // user role
-  const userRole = new Role(scope, `NF-UserRole-${env}`, {
-    assumedBy: new ServicePrincipal("cognito-idp.amazonaws.com"),
-  });
-
-  userRole.addToPolicy(
-    new PolicyStatement({
-      actions: ["dynamodb:Scan", "dynamodb:Query"],
-      resources: [recommendTableArn],
-    })
+  checkAdminGroupRole.addManagedPolicy(
+    ManagedPolicy.fromAwsManagedPolicyName(
+      "service-role/AWSLambdaBasicExecutionRole"
+    )
   );
 
   return {
-    adminRole,
-    userRole,
+    checkAdminGroupRole,
   };
 };

@@ -1,23 +1,26 @@
 import { Construct } from "constructs";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as cdk from "aws-cdk-lib";
 
 export const apiGatewayConstruct = ({
   scope,
+  env,
   oauthTokenFunction,
   loginFunction,
   signupFunction,
   userConfirmationFunction,
-  env,
   createRecommendSourceFunction,
+  checkAdminGroupFunction,
 }: {
   scope: Construct;
+  env: string;
   oauthTokenFunction: lambda.Function;
   loginFunction: lambda.Function;
   signupFunction: lambda.Function;
   userConfirmationFunction: lambda.Function;
-  env: string;
   createRecommendSourceFunction: lambda.Function;
+  checkAdminGroupFunction: lambda.Function;
 }) => {
   // create api gateway
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -111,10 +114,22 @@ export const apiGatewayConstruct = ({
     apiGateway.root.addResource("recommend-source");
 
   // method create recommend source
+  const checkAdminGroupAuthorizer = new apigateway.RequestAuthorizer(
+    scope,
+    `NF-CheckAdminGroupAuthorizer-${env}`,
+    {
+      handler: checkAdminGroupFunction,
+      identitySources: [apigateway.IdentitySource.header("Authorization")],
+      resultsCacheTtl: cdk.Duration.minutes(10),
+    }
+  );
   const createRecommendSourceIntegration = new apigateway.LambdaIntegration(
     createRecommendSourceFunction
   );
-  recommendSourceResource.addMethod("POST", createRecommendSourceIntegration);
+  recommendSourceResource.addMethod("POST", createRecommendSourceIntegration, {
+    authorizer: checkAdminGroupAuthorizer,
+    authorizationType: apigateway.AuthorizationType.CUSTOM,
+  });
 
   new apigateway.Stage(scope, `NF-Stage-${env}`, {
     deployment: apiGateway.latestDeployment!,
