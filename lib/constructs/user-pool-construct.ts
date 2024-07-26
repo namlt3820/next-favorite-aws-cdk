@@ -4,25 +4,25 @@ import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import {
   CfnUserPoolGroup,
-  CfnIdentityPool,
-  CfnIdentityPoolRoleAttachment,
+  // CfnIdentityPool,
+  // CfnIdentityPoolRoleAttachment,
 } from "aws-cdk-lib/aws-cognito";
 import { Role } from "aws-cdk-lib/aws-iam";
 
 export const userPoolConstruct = ({
+  // adminRole,
+  // userRole,
   scope,
   postConfirmationFunction,
   env,
   removalPolicy,
-  adminRole,
-  userRole,
 }: {
   scope: Construct;
   postConfirmationFunction: cdk.aws_lambda.Function;
   env: string;
   removalPolicy: cdk.RemovalPolicy;
-  adminRole: Role;
-  userRole: Role;
+  // adminRole: Role;
+  // userRole: Role;
 }) => {
   const fromEmail = process.env.AWS_COGNITO_FROM_EMAIL!;
   const sesVerifiedDomain = process.env.AWS_COGNITO_SES_VERIFIED_DOMAIN!;
@@ -118,49 +118,6 @@ export const userPoolConstruct = ({
     groupName: "user",
   });
 
-  // Create Identity Pool
-  const identityPool = new CfnIdentityPool(scope, `NF-IdentityPool-${env}`, {
-    allowUnauthenticatedIdentities: true,
-    cognitoIdentityProviders: [
-      {
-        providerName: `cognito-idp.${cdk.Aws.REGION}.amazonaws.com/${userPool.userPoolId}`,
-        clientId: appClient.userPoolClientId,
-      },
-    ],
-  });
-
-  // Attach Roles to Identity Pool
-  new CfnIdentityPoolRoleAttachment(scope, `NF-RoleAttachment-${env}`, {
-    identityPoolId: identityPool.ref,
-    roles: {
-      authenticated: userRole.roleArn,
-      unauthenticated: userRole.roleArn,
-    },
-    roleMappings: {
-      "cognito-user-pool": {
-        ambiguousRoleResolution: "AuthenticatedRole",
-        identityProvider: `cognito-idp.${cdk.Aws.REGION}.amazonaws.com/${userPool.userPoolId}:${appClient.userPoolClientId}`,
-        type: "Rules",
-        rulesConfiguration: {
-          rules: [
-            {
-              claim: "cognito:groups",
-              matchType: "Equals",
-              value: "admin",
-              roleArn: adminRole.roleArn,
-            },
-            {
-              claim: "cognito:groups",
-              matchType: "Equals",
-              value: "user",
-              roleArn: userRole.roleArn,
-            },
-          ],
-        },
-      },
-    },
-  });
-
   // Outputs
   new cdk.CfnOutput(scope, `NF-UserPoolId-${env}`, {
     value: userPool.userPoolId,
@@ -174,6 +131,57 @@ export const userPoolConstruct = ({
 
   return {
     appClient,
-    identityPool,
+    // identityPool,
+    userPool,
   };
+
+  /**
+   * The request flow is Client => API Gateway => Lambda => DynamoDB.
+   * DynamoDB only checks the Lambda's role, so role mapping from CfnIdentityPoolRoleAttachment, which maps roles to user groups, is ineffective.
+   * Default authorizers only validate tokens and do not support custom logic.
+   * Therefore, a custom Lambda authorizer is required. Role mapping is retained here for future use.
+   */
+
+  // Create Identity Pool
+  // const identityPool = new CfnIdentityPool(scope, `NF-IdentityPool-${env}`, {
+  //   allowUnauthenticatedIdentities: true,
+  //   cognitoIdentityProviders: [
+  //     {
+  //       providerName: `cognito-idp.${cdk.Aws.REGION}.amazonaws.com/${userPool.userPoolId}`,
+  //       clientId: appClient.userPoolClientId,
+  //     },
+  //   ],
+  // });
+
+  // Attach Roles to Identity Pool
+  // new CfnIdentityPoolRoleAttachment(scope, `NF-RoleAttachment-${env}`, {
+  //   identityPoolId: identityPool.ref,
+  //   roles: {
+  //     authenticated: userRole.roleArn,
+  //     unauthenticated: userRole.roleArn,
+  //   },
+  //   roleMappings: {
+  //     "cognito-user-pool": {
+  //       ambiguousRoleResolution: "AuthenticatedRole",
+  //       identityProvider: `cognito-idp.${cdk.Aws.REGION}.amazonaws.com/${userPool.userPoolId}:${appClient.userPoolClientId}`,
+  //       type: "Rules",
+  //       rulesConfiguration: {
+  //         rules: [
+  //           {
+  //             claim: "cognito:groups",
+  //             matchType: "Contains",
+  //             value: "admin",
+  //             roleArn: adminRole.roleArn,
+  //           },
+  //           {
+  //             claim: "cognito:groups",
+  //             matchType: "Contains",
+  //             value: "user",
+  //             roleArn: userRole.roleArn,
+  //           },
+  //         ],
+  //       },
+  //     },
+  //   },
+  // });
 };

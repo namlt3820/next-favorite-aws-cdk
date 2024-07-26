@@ -11,6 +11,7 @@ import { loginConstruct } from "./constructs/login-construct";
 import { signupConstruct } from "./constructs/signup-construct";
 import { userConfirmationConstruct } from "./constructs/user-confirmation-construct";
 import { iamConstruct } from "./constructs/iam-construct";
+import { createRecommendSourceConstruct } from "./constructs/create-recommend-source-construct";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -40,11 +41,11 @@ export class NextFavoriteStack extends cdk.Stack {
     userTable.grantWriteData(postConfirmationFunction);
 
     // IAM construct
-    const { userRole, adminRole } = iamConstruct({
-      scope: this,
-      env,
-      recommendTableArn: recommendSourceTable.tableArn,
-    });
+    // const { userRole, adminRole } = iamConstruct({
+    //   scope: this,
+    //   env,
+    //   recommendTableArn: recommendSourceTable.tableArn,
+    // });
 
     // User Pool construct
     const { appClient } = userPoolConstruct({
@@ -52,8 +53,8 @@ export class NextFavoriteStack extends cdk.Stack {
       env,
       postConfirmationFunction,
       removalPolicy,
-      userRole,
-      adminRole,
+      // userRole,
+      // adminRole,
     });
 
     // Secrets Manager construct
@@ -99,6 +100,14 @@ export class NextFavoriteStack extends cdk.Stack {
     });
     cognitoAppClientSecret.grantRead(userConfirmationFunction);
 
+    // Create Recommend Source construct
+    const { createRecommendSourceFunction } = createRecommendSourceConstruct({
+      scope: this,
+      env,
+      tableName: recommendSourceTable.tableName,
+    });
+    recommendSourceTable.grantWriteData(createRecommendSourceFunction);
+
     // API Gateway construct
     apiGatewayConstruct({
       scope: this,
@@ -107,6 +116,7 @@ export class NextFavoriteStack extends cdk.Stack {
       loginFunction,
       signupFunction,
       userConfirmationFunction,
+      createRecommendSourceFunction,
     });
   }
 }

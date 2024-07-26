@@ -9,6 +9,7 @@ export const apiGatewayConstruct = ({
   signupFunction,
   userConfirmationFunction,
   env,
+  createRecommendSourceFunction,
 }: {
   scope: Construct;
   oauthTokenFunction: lambda.Function;
@@ -16,7 +17,9 @@ export const apiGatewayConstruct = ({
   signupFunction: lambda.Function;
   userConfirmationFunction: lambda.Function;
   env: string;
+  createRecommendSourceFunction: lambda.Function;
 }) => {
+  // create api gateway
   const apiGatewayId = `NF-ApiGateway-${env}`;
   const apiGateway = new apigateway.RestApi(scope, apiGatewayId, {
     restApiName: apiGatewayId,
@@ -27,6 +30,7 @@ export const apiGatewayConstruct = ({
     cloudWatchRole: true,
   });
 
+  // create request validator
   const requestValidatorId = `NF-RequestValidator-${env}`;
   const requestValidator = apiGateway.addRequestValidator(requestValidatorId, {
     requestValidatorName: requestValidatorId,
@@ -101,6 +105,16 @@ export const apiGatewayConstruct = ({
       ),
     },
   });
+
+  // route recommend source
+  const recommendSourceResource =
+    apiGateway.root.addResource("recommend-source");
+
+  // method create recommend source
+  const createRecommendSourceIntegration = new apigateway.LambdaIntegration(
+    createRecommendSourceFunction
+  );
+  recommendSourceResource.addMethod("POST", createRecommendSourceIntegration);
 
   new apigateway.Stage(scope, `NF-Stage-${env}`, {
     deployment: apiGateway.latestDeployment!,
