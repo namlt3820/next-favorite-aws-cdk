@@ -10,6 +10,7 @@ import { secretsManagerConstruct } from "./constructs/secrets-manager-construct"
 import { loginConstruct } from "./constructs/login-construct";
 import { signupConstruct } from "./constructs/signup-construct";
 import { userConfirmationConstruct } from "./constructs/user-confirmation-construct";
+import { iamConstruct } from "./constructs/iam-construct";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -24,7 +25,7 @@ export class NextFavoriteStack extends cdk.Stack {
     helloWorldConstruct({ scope: this, env });
 
     // DynamoDB Table construct
-    const { userTable } = dynamoTableConstruct({
+    const { userTable, recommendSourceTable } = dynamoTableConstruct({
       scope: this,
       env,
       removalPolicy,
@@ -38,12 +39,21 @@ export class NextFavoriteStack extends cdk.Stack {
     });
     userTable.grantWriteData(postConfirmationFunction);
 
+    // IAM construct
+    const { userRole, adminRole } = iamConstruct({
+      scope: this,
+      env,
+      recommendTableArn: recommendSourceTable.tableArn,
+    });
+
     // User Pool construct
     const { appClient } = userPoolConstruct({
       scope: this,
       env,
       postConfirmationFunction,
       removalPolicy,
+      userRole,
+      adminRole,
     });
 
     // Secrets Manager construct

@@ -12,6 +12,7 @@ export const dynamoTableConstruct = ({
   removalPolicy: cdk.RemovalPolicy;
 }) => {
   const userTableName = `NF-UserTable-${env}`;
+  const recommendSourceTableName = `NF-RecommendSourceTable-${env}`;
 
   const userTable = new dynamodb.Table(scope, userTableName, {
     tableName: userTableName,
@@ -20,9 +21,30 @@ export const dynamoTableConstruct = ({
     removalPolicy,
   });
 
+  const recommendSourceTable = new dynamodb.Table(
+    scope,
+    recommendSourceTableName,
+    {
+      tableName: recommendSourceTableName,
+      partitionKey: {
+        name: "recommendSourceId",
+        type: dynamodb.AttributeType.STRING,
+      },
+      billingMode: cdk.aws_dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy,
+    }
+  );
+
   new cdk.CfnOutput(scope, `NF-UserTableArn-${env}`, {
     value: userTable.tableArn,
   });
 
-  return { userTable };
+  new cdk.CfnOutput(scope, `NF-RecommendSourceTableArn-${env}`, {
+    value: recommendSourceTable.tableArn,
+  });
+
+  return {
+    userTable,
+    recommendSourceTable,
+  };
 };

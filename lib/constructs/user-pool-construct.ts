@@ -2,17 +2,27 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
+import {
+  CfnUserPoolGroup,
+  CfnIdentityPool,
+  CfnIdentityPoolRoleAttachment,
+} from "aws-cdk-lib/aws-cognito";
+import { Role } from "aws-cdk-lib/aws-iam";
 
 export const userPoolConstruct = ({
   scope,
   postConfirmationFunction,
   env,
   removalPolicy,
+  adminRole,
+  userRole,
 }: {
   scope: Construct;
   postConfirmationFunction: cdk.aws_lambda.Function;
   env: string;
   removalPolicy: cdk.RemovalPolicy;
+  adminRole: Role;
+  userRole: Role;
 }) => {
   const fromEmail = process.env.AWS_COGNITO_FROM_EMAIL!;
   const sesVerifiedDomain = process.env.AWS_COGNITO_SES_VERIFIED_DOMAIN!;
@@ -97,6 +107,60 @@ export const userPoolConstruct = ({
     },
   });
 
+  // Create user groups
+  new CfnUserPoolGroup(scope, `NF-AdminGroup-${env}`, {
+    userPoolId: userPool.userPoolId,
+    groupName: "admin",
+  });
+
+  new CfnUserPoolGroup(scope, `NF-UserGroup-${env}`, {
+    userPoolId: userPool.userPoolId,
+    groupName: "user",
+  });
+
+  // Create Identity Pool
+  const identityPool = new CfnIdentityPool(scope, `NF-IdentityPool-${env}`, {
+    allowUnauthenticatedIdentities: true,
+    cognitoIdentityProviders: [
+      {
+        providerName: `cognito-idp.${cdk.Aws.REGION}.amazonaws.com/${userPool.userPoolId}`,
+        clientId: appClient.userPoolClientId,
+      },
+    ],
+  });
+
+  // Attach Roles to Identity Pool
+  new CfnIdentityPoolRoleAttachment(scope, `NF-RoleAttachment-${env}`, {
+    identityPoolId: identityPool.ref,
+    roles: {
+      authenticated: userRole.roleArn,
+      unauthenticated: userRole.roleArn,
+    },
+    roleMappings: {
+      "cognito-user-pool": {
+        ambiguousRoleResolution: "AuthenticatedRole",
+        identityProvider: `cognito-idp.${cdk.Aws.REGION}.amazonaws.com/${userPool.userPoolId}:${appClient.userPoolClientId}`,
+        type: "Rules",
+        rulesConfiguration: {
+          rules: [
+            {
+              claim: "cognito:groups",
+              matchType: "Equals",
+              value: "admin",
+              roleArn: adminRole.roleArn,
+            },
+            {
+              claim: "cognito:groups",
+              matchType: "Equals",
+              value: "user",
+              roleArn: userRole.roleArn,
+            },
+          ],
+        },
+      },
+    },
+  });
+
   // Outputs
   new cdk.CfnOutput(scope, `NF-UserPoolId-${env}`, {
     value: userPool.userPoolId,
@@ -110,5 +174,6 @@ export const userPoolConstruct = ({
 
   return {
     appClient,
+    identityPool,
   };
 };
