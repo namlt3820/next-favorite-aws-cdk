@@ -18,7 +18,7 @@ export const createRecommendSourceConstruct = ({
     {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "handler.handler",
-      code: lambda.Code.fromAsset("lambdas/create-recommend-source/dist"),
+      code: lambda.Code.fromAsset("lambdas/recommend-source/create/dist"),
       environment: {
         REGION: region,
         TABLE_NAME: tableName,

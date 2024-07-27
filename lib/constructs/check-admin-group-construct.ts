@@ -21,7 +21,7 @@ export const checkAdminGroupConstruct = ({
     {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "handler.handler",
-      code: lambda.Code.fromAsset("lambdas/check-admin-group/dist"),
+      code: lambda.Code.fromAsset("lambdas/auth/check-admin-group/dist"),
       environment: {
         REGION: region,
         USER_POOL_ID: userPoolId,

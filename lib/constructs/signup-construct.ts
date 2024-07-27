@@ -20,7 +20,7 @@ export const signupConstruct = ({
     {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "handler.handler",
-      code: lambda.Code.fromAsset("lambdas/signup/dist"),
+      code: lambda.Code.fromAsset("lambdas/auth/signup/dist"),
       environment: {
         CLIENT_ID: clientId,
         REGION: region,

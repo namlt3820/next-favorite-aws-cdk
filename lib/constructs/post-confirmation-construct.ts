@@ -16,7 +16,7 @@ export const postConfirmationConstruct = ({
     {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "handler.handler",
-      code: lambda.Code.fromAsset("lambdas/post-confirmation/dist"),
+      code: lambda.Code.fromAsset("lambdas/auth/post-confirmation/dist"),
       environment: {
         TABLE_NAME: tableName,
       },

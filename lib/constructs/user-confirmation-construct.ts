@@ -20,7 +20,7 @@ export const userConfirmationConstruct = ({
     {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "handler.handler",
-      code: lambda.Code.fromAsset("lambdas/user-confirmation/dist"),
+      code: lambda.Code.fromAsset("lambdas/auth/user-confirmation/dist"),
       environment: {
         CLIENT_ID: clientId,
         REGION: region,

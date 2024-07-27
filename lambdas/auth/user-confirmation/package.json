@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.141",
+    "@types/aws-lambda": "^8.10.142",
     "@types/node": "^20.14.11",
     "esbuild": "^0.23.0",
     "typescript": "^5.5.4"

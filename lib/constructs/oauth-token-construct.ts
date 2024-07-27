@@ -22,7 +22,7 @@ export const oauthTokenConstruct = ({
     {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "handler.handler",
-      code: lambda.Code.fromAsset("lambdas/oauth-token/dist"),
+      code: lambda.Code.fromAsset("lambdas/auth/oauth-token/dist"),
       environment: {
         CLIENT_ID: clientId,
         DOMAIN_NAME: domainName,
