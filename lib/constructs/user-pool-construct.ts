@@ -7,7 +7,6 @@ import {
   // CfnIdentityPool,
   // CfnIdentityPoolRoleAttachment,
 } from "aws-cdk-lib/aws-cognito";
-import { Role } from "aws-cdk-lib/aws-iam";
 
 export const userPoolConstruct = ({
   // adminRole,

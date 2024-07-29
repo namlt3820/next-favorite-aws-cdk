@@ -1,18 +1,20 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import { helloWorldConstruct } from "./constructs/hello-world-construct";
-import { postConfirmationConstruct } from "./constructs/post-confirmation-construct";
+import { postConfirmationConstruct } from "./constructs/auth/post-confirmation-construct";
 import { userPoolConstruct } from "./constructs/user-pool-construct";
 import { dynamoTableConstruct } from "./constructs/dynamo-table-construct";
-import { oauthTokenConstruct } from "./constructs/oauth-token-construct";
+import { oauthTokenConstruct } from "./constructs/auth/oauth-token-construct";
 import { apiGatewayConstruct } from "./constructs/api-gateway-construct";
 import { secretsManagerConstruct } from "./constructs/secrets-manager-construct";
-import { loginConstruct } from "./constructs/login-construct";
-import { signupConstruct } from "./constructs/signup-construct";
-import { userConfirmationConstruct } from "./constructs/user-confirmation-construct";
+import { loginConstruct } from "./constructs/auth/login-construct";
+import { signupConstruct } from "./constructs/auth/signup-construct";
+import { userConfirmationConstruct } from "./constructs/auth/user-confirmation-construct";
 import { iamConstruct } from "./constructs/iam-construct";
 import { createRecommendSourceConstruct } from "./constructs/create-recommend-source-construct";
-import { checkAdminGroupConstruct } from "./constructs/check-admin-group-construct";
+import { checkAdminGroupConstruct } from "./constructs/auth/check-admin-group-construct";
+import { traktApiSearchConstruct } from "./constructs/trakt-api/search-construct";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -117,6 +119,21 @@ export class NextFavoriteStack extends cdk.Stack {
       role: checkAdminGroupRole,
     });
 
+    // Trakt API Search construct
+    const { traktApiSearchFunction } = traktApiSearchConstruct({
+      scope: this,
+      env,
+    });
+
+    // Assign read permission from secret to lambda function
+    const traktApiSecretId = `NF-TraktApiKeySecret-${env}`;
+    const traktApiKeySecret = secretsmanager.Secret.fromSecretNameV2(
+      this,
+      traktApiSecretId,
+      traktApiSecretId
+    );
+    traktApiKeySecret.grantRead(traktApiSearchFunction);
+
     // API Gateway construct
     apiGatewayConstruct({
       scope: this,
@@ -127,6 +144,7 @@ export class NextFavoriteStack extends cdk.Stack {
       userConfirmationFunction,
       createRecommendSourceFunction,
       checkAdminGroupFunction,
+      traktApiSearchFunction,
     });
   }
 }

@@ -12,6 +12,7 @@ export const apiGatewayConstruct = ({
   userConfirmationFunction,
   createRecommendSourceFunction,
   checkAdminGroupFunction,
+  traktApiSearchFunction,
 }: {
   scope: Construct;
   env: string;
@@ -21,6 +22,7 @@ export const apiGatewayConstruct = ({
   userConfirmationFunction: lambda.Function;
   createRecommendSourceFunction: lambda.Function;
   checkAdminGroupFunction: lambda.Function;
+  traktApiSearchFunction: lambda.Function;
 }) => {
   // create api gateway
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -130,6 +132,16 @@ export const apiGatewayConstruct = ({
     authorizer: checkAdminGroupAuthorizer,
     authorizationType: apigateway.AuthorizationType.CUSTOM,
   });
+
+  // route trakt api
+  const traktApiResource = apiGateway.root.addResource("trakt");
+
+  // method search
+  const traktApiSearchResource = traktApiResource.addResource("search");
+  const traktApiSearchIntegration = new apigateway.LambdaIntegration(
+    traktApiSearchFunction
+  );
+  traktApiSearchResource.addMethod("GET", traktApiSearchIntegration);
 
   new apigateway.Stage(scope, `NF-Stage-${env}`, {
     deployment: apiGateway.latestDeployment!,
