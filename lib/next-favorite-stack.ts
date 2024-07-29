@@ -164,6 +164,7 @@ export class NextFavoriteStack extends cdk.Stack {
       createRecommendSourceFunction,
       checkAdminGroupFunction,
       traktApiSearchFunction,
+      createFavoriteItemFunction,
     });
   }
 }

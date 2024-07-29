@@ -13,6 +13,7 @@ export const apiGatewayConstruct = ({
   createRecommendSourceFunction,
   checkAdminGroupFunction,
   traktApiSearchFunction,
+  createFavoriteItemFunction,
 }: {
   scope: Construct;
   env: string;
@@ -23,6 +24,7 @@ export const apiGatewayConstruct = ({
   createRecommendSourceFunction: lambda.Function;
   checkAdminGroupFunction: lambda.Function;
   traktApiSearchFunction: lambda.Function;
+  createFavoriteItemFunction: lambda.Function;
 }) => {
   // create api gateway
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -142,6 +144,13 @@ export const apiGatewayConstruct = ({
     traktApiSearchFunction
   );
   traktApiSearchResource.addMethod("GET", traktApiSearchIntegration);
+
+  // route favorite api
+  const favoriteApiResource = apiGateway.root.addResource("favorite");
+  const createFavoriteItemIntegration = new apigateway.LambdaIntegration(
+    createFavoriteItemFunction
+  );
+  favoriteApiResource.addMethod("POST", createFavoriteItemIntegration);
 
   new apigateway.Stage(scope, `NF-Stage-${env}`, {
     deployment: apiGateway.latestDeployment!,
