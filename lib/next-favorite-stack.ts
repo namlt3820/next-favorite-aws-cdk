@@ -15,6 +15,7 @@ import { iamConstruct } from "./constructs/iam-construct";
 import { createRecommendSourceConstruct } from "./constructs/create-recommend-source-construct";
 import { checkAdminGroupConstruct } from "./constructs/auth/check-admin-group-construct";
 import { traktApiSearchConstruct } from "./constructs/trakt-api/search-construct";
+import { createFavoriteItemConstruct } from "./constructs/favorite/create-item-construct";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -29,11 +30,12 @@ export class NextFavoriteStack extends cdk.Stack {
     helloWorldConstruct({ scope: this, env });
 
     // DynamoDB Table construct
-    const { userTable, recommendSourceTable } = dynamoTableConstruct({
-      scope: this,
-      env,
-      removalPolicy,
-    });
+    const { userTable, recommendSourceTable, favoriteTable } =
+      dynamoTableConstruct({
+        scope: this,
+        env,
+        removalPolicy,
+      });
 
     // Post Confirmation construct
     const postConfirmationFunction = postConfirmationConstruct({
@@ -142,6 +144,14 @@ export class NextFavoriteStack extends cdk.Stack {
       tmdbApiSecretId
     );
     tmdbApiKeySecret.grantRead(traktApiSearchFunction);
+
+    // Create Favorite Item construct
+    const { createFavoriteItemFunction } = createFavoriteItemConstruct({
+      scope: this,
+      env,
+      tableName: favoriteTable.tableName,
+    });
+    favoriteTable.grantWriteData(createFavoriteItemFunction);
 
     // API Gateway construct
     apiGatewayConstruct({
