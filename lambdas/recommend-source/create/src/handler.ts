@@ -19,14 +19,13 @@ export const handler = async (
   console.log("Event:", JSON.stringify(event, null, 2));
 
   const requestBody = JSON.parse(event.body || "{}");
-  const { apiUrl, apiKey, description } = requestBody;
+  const { name, description } = requestBody;
   const recommendSourceId = uuidv4();
   const params: PutCommandInput = {
     TableName: process.env.TABLE_NAME!,
     Item: {
       recommendSourceId,
-      apiUrl,
-      apiKey,
+      name,
       description,
     },
   };
