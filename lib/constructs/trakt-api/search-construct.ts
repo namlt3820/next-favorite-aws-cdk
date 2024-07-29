@@ -9,8 +9,11 @@ export const traktApiSearchConstruct = ({
   env: string;
 }) => {
   const region = process.env.AWS_REGION!;
-  const secretName = `NF-TraktApiKeySecret-${env}`;
-  const traktApiUrl = process.env.AWS_TRAKT_API_URL!;
+  const traktSecretName = `NF-TraktApiKeySecret-${env}`;
+  const tmdbSecretName = `NF-TmdbApiKeySecret-${env}`;
+  const traktApiUrl = process.env.TRAKT_API_URL!;
+  const tmdbApiUrl = process.env.TMDB_API_URL!;
+  const tmdbImageUrl = process.env.TMDB_IMAGE_URL!;
 
   const traktApiSearchFunction = new lambda.Function(
     scope,
@@ -21,8 +24,11 @@ export const traktApiSearchConstruct = ({
       code: lambda.Code.fromAsset("lambdas/trakt-api/search/dist"),
       environment: {
         TRAKT_API_URL: traktApiUrl,
+        TMDB_API_URL: tmdbApiUrl,
+        TMDB_IMAGE_URL: tmdbImageUrl,
         REGION: region,
-        SECRET_NAME: secretName,
+        TRAKT_SECRET_NAME: traktSecretName,
+        TMDB_SECRET_NAME: tmdbSecretName,
       },
     }
   );

@@ -125,7 +125,7 @@ export class NextFavoriteStack extends cdk.Stack {
       env,
     });
 
-    // Assign read permission from secret to lambda function
+    // Assign read permission from trakt api secret to trakt api search function
     const traktApiSecretId = `NF-TraktApiKeySecret-${env}`;
     const traktApiKeySecret = secretsmanager.Secret.fromSecretNameV2(
       this,
@@ -133,6 +133,15 @@ export class NextFavoriteStack extends cdk.Stack {
       traktApiSecretId
     );
     traktApiKeySecret.grantRead(traktApiSearchFunction);
+
+    // Assign read permission from tmdb api secret to trakt api search function
+    const tmdbApiSecretId = `NF-TmdbApiKeySecret-${env}`;
+    const tmdbApiKeySecret = secretsmanager.Secret.fromSecretNameV2(
+      this,
+      tmdbApiSecretId,
+      tmdbApiSecretId
+    );
+    tmdbApiKeySecret.grantRead(traktApiSearchFunction);
 
     // API Gateway construct
     apiGatewayConstruct({
