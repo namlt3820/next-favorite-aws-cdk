@@ -1,7 +1,7 @@
 import { Construct } from "constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 
-export const traktApiSearchConstruct = ({
+export const traktSearchMovieConstruct = ({
   scope,
   env,
 }: {
@@ -15,13 +15,13 @@ export const traktApiSearchConstruct = ({
   const tmdbApiUrl = process.env.TMDB_API_URL!;
   const tmdbImageUrl = process.env.TMDB_IMAGE_URL!;
 
-  const traktApiSearchFunction = new lambda.Function(
+  const traktSearchMovieFunction = new lambda.Function(
     scope,
-    `NF-TraktApiSearchFunction-${env}`,
+    `NF-TraktSearchMovieFunction-${env}`,
     {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "handler.handler",
-      code: lambda.Code.fromAsset("lambdas/trakt-api/search/dist"),
+      code: lambda.Code.fromAsset("lambdas/trakt/search-movie/dist"),
       environment: {
         TRAKT_API_URL: traktApiUrl,
         TMDB_API_URL: tmdbApiUrl,
@@ -33,5 +33,5 @@ export const traktApiSearchConstruct = ({
     }
   );
 
-  return { traktApiSearchFunction };
+  return { traktSearchMovieFunction };
 };

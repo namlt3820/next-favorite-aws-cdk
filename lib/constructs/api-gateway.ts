@@ -12,7 +12,7 @@ export const apiGatewayConstruct = ({
   userConfirmationFunction,
   createRecommendSourceFunction,
   checkAdminGroupFunction,
-  traktApiSearchFunction,
+  traktSearchMovieFunction,
   createFavoriteItemFunction,
 }: {
   scope: Construct;
@@ -23,7 +23,7 @@ export const apiGatewayConstruct = ({
   userConfirmationFunction: lambda.Function;
   createRecommendSourceFunction: lambda.Function;
   checkAdminGroupFunction: lambda.Function;
-  traktApiSearchFunction: lambda.Function;
+  traktSearchMovieFunction: lambda.Function;
   createFavoriteItemFunction: lambda.Function;
 }) => {
   // create api gateway
@@ -135,22 +135,27 @@ export const apiGatewayConstruct = ({
     authorizationType: apigateway.AuthorizationType.CUSTOM,
   });
 
-  // route trakt api
-  const traktApiResource = apiGateway.root.addResource("trakt");
+  // route trakt
+  const traktResource = apiGateway.root.addResource("trakt");
 
-  // method search
-  const traktApiSearchResource = traktApiResource.addResource("search");
-  const traktApiSearchIntegration = new apigateway.LambdaIntegration(
-    traktApiSearchFunction
+  // route trakt movie
+  const traktMovieResource = traktResource.addResource("movie");
+
+  // route trakt search movie
+  const traktSearchMovieResource = traktMovieResource.addResource("search");
+  const traktSearchMovieIntegration = new apigateway.LambdaIntegration(
+    traktSearchMovieFunction
   );
-  traktApiSearchResource.addMethod("GET", traktApiSearchIntegration);
+  traktSearchMovieResource.addMethod("GET", traktSearchMovieIntegration);
 
-  // route favorite api
-  const favoriteApiResource = apiGateway.root.addResource("favorite");
+  // route favorite
+  const favoriteResource = apiGateway.root.addResource("favorite");
+
+  // method create favorite item
   const createFavoriteItemIntegration = new apigateway.LambdaIntegration(
     createFavoriteItemFunction
   );
-  favoriteApiResource.addMethod("POST", createFavoriteItemIntegration);
+  favoriteResource.addMethod("POST", createFavoriteItemIntegration);
 
   new apigateway.Stage(scope, `NF-Stage-${env}`, {
     deployment: apiGateway.latestDeployment!,

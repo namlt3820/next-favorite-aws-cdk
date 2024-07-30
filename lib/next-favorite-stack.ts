@@ -1,21 +1,21 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
-import { helloWorldConstruct } from "./constructs/hello-world-construct";
-import { postConfirmationConstruct } from "./constructs/auth/post-confirmation-construct";
-import { userPoolConstruct } from "./constructs/user-pool-construct";
-import { dynamoTableConstruct } from "./constructs/dynamo-table-construct";
-import { oauthTokenConstruct } from "./constructs/auth/oauth-token-construct";
-import { apiGatewayConstruct } from "./constructs/api-gateway-construct";
-import { secretsManagerConstruct } from "./constructs/secrets-manager-construct";
-import { loginConstruct } from "./constructs/auth/login-construct";
-import { signupConstruct } from "./constructs/auth/signup-construct";
-import { userConfirmationConstruct } from "./constructs/auth/user-confirmation-construct";
-import { iamConstruct } from "./constructs/iam-construct";
-import { createRecommendSourceConstruct } from "./constructs/create-recommend-source-construct";
-import { checkAdminGroupConstruct } from "./constructs/auth/check-admin-group-construct";
-import { traktApiSearchConstruct } from "./constructs/trakt-api/search-construct";
-import { createFavoriteItemConstruct } from "./constructs/favorite/create-item-construct";
+import { helloWorldConstruct } from "./constructs/hello-world";
+import { postConfirmationConstruct } from "./constructs/auth/post-confirmation";
+import { userPoolConstruct } from "./constructs/auth/user-pool";
+import { dynamoTableConstruct } from "./constructs/dynamo-table";
+import { oauthTokenConstruct } from "./constructs/auth/oauth-token";
+import { apiGatewayConstruct } from "./constructs/api-gateway";
+import { secretsManagerConstruct } from "./constructs/secrets-manager";
+import { loginConstruct } from "./constructs/auth/login";
+import { signupConstruct } from "./constructs/auth/signup";
+import { userConfirmationConstruct } from "./constructs/auth/user-confirmation";
+import { iamConstruct } from "./constructs/auth/iam";
+import { createRecommendSourceConstruct } from "./constructs/recomment-source/create";
+import { checkAdminGroupConstruct } from "./constructs/auth/check-admin-group";
+import { traktSearchMovieConstruct } from "./constructs/trakt/search-movie";
+import { createFavoriteItemConstruct } from "./constructs/favorite/create";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -122,7 +122,7 @@ export class NextFavoriteStack extends cdk.Stack {
     });
 
     // Trakt API Search construct
-    const { traktApiSearchFunction } = traktApiSearchConstruct({
+    const { traktSearchMovieFunction } = traktSearchMovieConstruct({
       scope: this,
       env,
     });
@@ -134,7 +134,7 @@ export class NextFavoriteStack extends cdk.Stack {
       traktApiSecretId,
       traktApiSecretId
     );
-    traktApiKeySecret.grantRead(traktApiSearchFunction);
+    traktApiKeySecret.grantRead(traktSearchMovieFunction);
 
     // Assign read permission from tmdb api secret to trakt api search function
     const tmdbApiSecretId = `NF-TmdbApiKeySecret-${env}`;
@@ -143,7 +143,7 @@ export class NextFavoriteStack extends cdk.Stack {
       tmdbApiSecretId,
       tmdbApiSecretId
     );
-    tmdbApiKeySecret.grantRead(traktApiSearchFunction);
+    tmdbApiKeySecret.grantRead(traktSearchMovieFunction);
 
     // Create Favorite Item construct
     const { createFavoriteItemFunction } = createFavoriteItemConstruct({
@@ -163,7 +163,7 @@ export class NextFavoriteStack extends cdk.Stack {
       userConfirmationFunction,
       createRecommendSourceFunction,
       checkAdminGroupFunction,
-      traktApiSearchFunction,
+      traktSearchMovieFunction,
       createFavoriteItemFunction,
     });
   }
