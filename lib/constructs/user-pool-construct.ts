@@ -7,6 +7,7 @@ import {
   // CfnIdentityPool,
   // CfnIdentityPoolRoleAttachment,
 } from "aws-cdk-lib/aws-cognito";
+import { Policy, PolicyStatement } from "aws-cdk-lib/aws-iam";
 
 export const userPoolConstruct = ({
   // adminRole,
@@ -29,6 +30,7 @@ export const userPoolConstruct = ({
   const callbackUrl = process.env.AWS_CALLBACK_URL!;
   const logoutUrl = process.env.AWS_LOGOUT_URL!;
   const certificateArn = process.env.AWS_CERTIFICATE_ARN!;
+  const region = process.env.REGION!;
 
   // Create a Cognito User Pool
   const userPool = new cognito.UserPool(scope, `NF-UserPool-${env}`, {
@@ -116,6 +118,21 @@ export const userPoolConstruct = ({
     userPoolId: userPool.userPoolId,
     groupName: "user",
   });
+
+  // Create IAM policy statement for AdminAddUserToGroup
+  const cognitoPolicyStatement = new PolicyStatement({
+    actions: ["cognito-idp:AdminAddUserToGroup"],
+    resources: [
+      `arn:aws:cognito-idp:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:userpool/${userPool.userPoolId}`,
+    ],
+  });
+
+  // Attach the policy to Lambda
+  postConfirmationFunction.role!.attachInlinePolicy(
+    new Policy(scope, `NF-PostConfirmation-Inline-Policy-${env}`, {
+      statements: [cognitoPolicyStatement],
+    })
+  );
 
   // Outputs
   new cdk.CfnOutput(scope, `NF-UserPoolId-${env}`, {
