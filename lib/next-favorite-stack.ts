@@ -16,6 +16,7 @@ import { createRecommendSourceConstruct } from "./constructs/recomment-source/cr
 import { checkAdminGroupConstruct } from "./constructs/auth/check-admin-group";
 import { traktSearchMovieConstruct } from "./constructs/trakt/search-movie";
 import { createFavoriteItemConstruct } from "./constructs/favorite/create";
+import { deleteFavoriteItemConstruct } from "./constructs/favorite/delete";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -153,6 +154,14 @@ export class NextFavoriteStack extends cdk.Stack {
     });
     favoriteTable.grantWriteData(createFavoriteItemFunction);
 
+    // Delete Favorite Item construct
+    const { deleteFavoriteItemFunction } = deleteFavoriteItemConstruct({
+      scope: this,
+      env,
+      tableName: favoriteTable.tableName,
+    });
+    favoriteTable.grantReadWriteData(deleteFavoriteItemFunction);
+
     // API Gateway construct
     apiGatewayConstruct({
       scope: this,
@@ -166,6 +175,7 @@ export class NextFavoriteStack extends cdk.Stack {
       traktSearchMovieFunction,
       createFavoriteItemFunction,
       cognitoAuthorizer,
+      deleteFavoriteItemFunction,
     });
   }
 }
