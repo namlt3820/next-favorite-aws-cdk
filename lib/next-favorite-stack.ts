@@ -46,7 +46,7 @@ export class NextFavoriteStack extends cdk.Stack {
     userTable.grantWriteData(postConfirmationFunction);
 
     // User Pool construct
-    const { appClient, userPool } = userPoolConstruct({
+    const { appClient, userPool, cognitoAuthorizer } = userPoolConstruct({
       scope: this,
       env,
       postConfirmationFunction,
@@ -165,6 +165,7 @@ export class NextFavoriteStack extends cdk.Stack {
       checkAdminGroupFunction,
       traktSearchMovieFunction,
       createFavoriteItemFunction,
+      cognitoAuthorizer,
     });
   }
 }

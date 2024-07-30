@@ -8,6 +8,7 @@ import {
   // CfnIdentityPoolRoleAttachment,
 } from "aws-cdk-lib/aws-cognito";
 import { Policy, PolicyStatement } from "aws-cdk-lib/aws-iam";
+import * as apigateway from "aws-cdk-lib/aws-apigateway";
 
 export const userPoolConstruct = ({
   // adminRole,
@@ -134,6 +135,15 @@ export const userPoolConstruct = ({
     })
   );
 
+  // Define Cognito Authorizer
+  const cognitoAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(
+    scope,
+    `NF-CognitoAuthorizer-${env}`,
+    {
+      cognitoUserPools: [userPool],
+    }
+  );
+
   // Outputs
   new cdk.CfnOutput(scope, `NF-UserPoolId-${env}`, {
     value: userPool.userPoolId,
@@ -149,6 +159,7 @@ export const userPoolConstruct = ({
     appClient,
     // identityPool,
     userPool,
+    cognitoAuthorizer,
   };
 
   /**

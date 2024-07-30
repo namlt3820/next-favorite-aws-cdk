@@ -18,8 +18,19 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log("Event:", JSON.stringify(event, null, 2));
 
+  const userId = event.requestContext?.authorizer?.claims?.sub;
+
+  if (!userId) {
+    return {
+      statusCode: 401,
+      body: JSON.stringify({
+        message: "Unauthorized",
+      }),
+    };
+  }
+
   const requestBody = JSON.parse(event.body || "{}");
-  const { userId, recommendSourceId, itemId } = requestBody;
+  const { recommendSourceId, itemId } = requestBody;
   const id = uuidv4();
   const params: PutCommandInput = {
     TableName: process.env.TABLE_NAME!,

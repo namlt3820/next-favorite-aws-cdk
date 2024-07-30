@@ -14,6 +14,7 @@ export const apiGatewayConstruct = ({
   checkAdminGroupFunction,
   traktSearchMovieFunction,
   createFavoriteItemFunction,
+  cognitoAuthorizer,
 }: {
   scope: Construct;
   env: string;
@@ -25,6 +26,7 @@ export const apiGatewayConstruct = ({
   checkAdminGroupFunction: lambda.Function;
   traktSearchMovieFunction: lambda.Function;
   createFavoriteItemFunction: lambda.Function;
+  cognitoAuthorizer: apigateway.CognitoUserPoolsAuthorizer;
 }) => {
   // create api gateway
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -155,7 +157,11 @@ export const apiGatewayConstruct = ({
   const createFavoriteItemIntegration = new apigateway.LambdaIntegration(
     createFavoriteItemFunction
   );
-  favoriteResource.addMethod("POST", createFavoriteItemIntegration);
+  favoriteResource.addMethod("POST", createFavoriteItemIntegration, {
+    authorizer: cognitoAuthorizer,
+    authorizationType: apigateway.AuthorizationType.COGNITO,
+    authorizationScopes: ["aws.cognito.signin.user.admin"],
+  });
 
   new apigateway.Stage(scope, `NF-Stage-${env}`, {
     deployment: apiGateway.latestDeployment!,

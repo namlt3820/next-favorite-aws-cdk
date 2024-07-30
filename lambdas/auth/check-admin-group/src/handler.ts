@@ -50,7 +50,6 @@ export const handler = async (
 
 // Function to verify the token and get the username
 const getUsernameFromToken = async (token: string): Promise<string> => {
-  console.log({ token });
   const command = new GetUserCommand({ AccessToken: token });
   const response = await cognitoClient.send(command);
   return response.Username!;
