@@ -16,6 +16,8 @@ export const apiGatewayConstruct = ({
   createFavoriteItemFunction,
   cognitoAuthorizer,
   deleteFavoriteItemFunction,
+  createIgnoreItemFunction,
+  deleteIgnoreItemFunction,
 }: {
   scope: Construct;
   env: string;
@@ -29,6 +31,8 @@ export const apiGatewayConstruct = ({
   createFavoriteItemFunction: lambda.Function;
   cognitoAuthorizer: apigateway.CognitoUserPoolsAuthorizer;
   deleteFavoriteItemFunction: lambda.Function;
+  createIgnoreItemFunction: lambda.Function;
+  deleteIgnoreItemFunction: lambda.Function;
 }) => {
   // create api gateway
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -170,6 +174,29 @@ export const apiGatewayConstruct = ({
     deleteFavoriteItemFunction
   );
   favoriteResource.addMethod("DELETE", deleteFavoriteItemIntegration, {
+    authorizer: cognitoAuthorizer,
+    authorizationType: apigateway.AuthorizationType.COGNITO,
+    authorizationScopes: ["aws.cognito.signin.user.admin"],
+  });
+
+  // route ignore
+  const ignoreResource = apiGateway.root.addResource("ignore");
+
+  // method create ignore item
+  const createIgnoreItemIntegration = new apigateway.LambdaIntegration(
+    createIgnoreItemFunction
+  );
+  ignoreResource.addMethod("POST", createIgnoreItemIntegration, {
+    authorizer: cognitoAuthorizer,
+    authorizationType: apigateway.AuthorizationType.COGNITO,
+    authorizationScopes: ["aws.cognito.signin.user.admin"],
+  });
+
+  // method delete ignore item
+  const deleteIgnoreItemIntegration = new apigateway.LambdaIntegration(
+    deleteIgnoreItemFunction
+  );
+  ignoreResource.addMethod("DELETE", deleteIgnoreItemIntegration, {
     authorizer: cognitoAuthorizer,
     authorizationType: apigateway.AuthorizationType.COGNITO,
     authorizationScopes: ["aws.cognito.signin.user.admin"],

@@ -42,6 +42,14 @@ export const dynamoTableConstruct = ({
     removalPolicy,
   });
 
+  const ignoreTableName = `NF-IgnoreTable-${env}`;
+  const ignoreTable = new dynamodb.Table(scope, ignoreTableName, {
+    tableName: ignoreTableName,
+    partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
+    billingMode: cdk.aws_dynamodb.BillingMode.PAY_PER_REQUEST,
+    removalPolicy,
+  });
+
   new cdk.CfnOutput(scope, `NF-UserTableArn-${env}`, {
     value: userTable.tableArn,
   });
@@ -54,9 +62,14 @@ export const dynamoTableConstruct = ({
     value: favoriteTable.tableArn,
   });
 
+  new cdk.CfnOutput(scope, `NF-IgnoreTableArn-${env}`, {
+    value: ignoreTable.tableArn,
+  });
+
   return {
     userTable,
     recommendSourceTable,
     favoriteTable,
+    ignoreTable,
   };
 };

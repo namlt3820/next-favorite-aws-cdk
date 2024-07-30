@@ -1,5 +1,5 @@
 {
-  "name": "delete-favorite-item",
+  "name": "create-ignore-item",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.616.0",
-    "@aws-sdk/lib-dynamodb": "^3.616.0"
+    "@aws-sdk/lib-dynamodb": "^3.616.0",
+    "uuid": "^10.0.0"
   }
 }

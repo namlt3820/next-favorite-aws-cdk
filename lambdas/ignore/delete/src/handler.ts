@@ -77,7 +77,7 @@ export const handler = async (
     console.log({ error });
     return {
       statusCode: 400,
-      body: JSON.stringify({ message: "Favorite item deletion failed" }),
+      body: JSON.stringify({ message: "Ignore item deletion failed" }),
     };
   }
 };

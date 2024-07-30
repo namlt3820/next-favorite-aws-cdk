@@ -17,6 +17,8 @@ import { checkAdminGroupConstruct } from "./constructs/auth/check-admin-group";
 import { traktSearchMovieConstruct } from "./constructs/trakt/search-movie";
 import { createFavoriteItemConstruct } from "./constructs/favorite/create";
 import { deleteFavoriteItemConstruct } from "./constructs/favorite/delete";
+import { createIgnoreItemConstruct } from "./constructs/ignore/create";
+import { deleteIgnoreItemConstruct } from "./constructs/ignore/delete";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -31,7 +33,7 @@ export class NextFavoriteStack extends cdk.Stack {
     helloWorldConstruct({ scope: this, env });
 
     // DynamoDB Table construct
-    const { userTable, recommendSourceTable, favoriteTable } =
+    const { userTable, recommendSourceTable, favoriteTable, ignoreTable } =
       dynamoTableConstruct({
         scope: this,
         env,
@@ -162,6 +164,22 @@ export class NextFavoriteStack extends cdk.Stack {
     });
     favoriteTable.grantReadWriteData(deleteFavoriteItemFunction);
 
+    // Create Ignore Item construct
+    const { createIgnoreItemFunction } = createIgnoreItemConstruct({
+      scope: this,
+      env,
+      tableName: ignoreTable.tableName,
+    });
+    ignoreTable.grantWriteData(createIgnoreItemFunction);
+
+    // Delete Ignore Item construct
+    const { deleteIgnoreItemFunction } = deleteIgnoreItemConstruct({
+      scope: this,
+      env,
+      tableName: ignoreTable.tableName,
+    });
+    ignoreTable.grantReadWriteData(deleteIgnoreItemFunction);
+
     // API Gateway construct
     apiGatewayConstruct({
       scope: this,
@@ -176,6 +194,8 @@ export class NextFavoriteStack extends cdk.Stack {
       createFavoriteItemFunction,
       cognitoAuthorizer,
       deleteFavoriteItemFunction,
+      createIgnoreItemFunction,
+      deleteIgnoreItemFunction,
     });
   }
 }
