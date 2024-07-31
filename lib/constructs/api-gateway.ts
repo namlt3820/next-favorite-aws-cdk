@@ -18,6 +18,7 @@ export const apiGatewayConstruct = ({
   deleteFavoriteItemFunction,
   createIgnoreItemFunction,
   deleteIgnoreItemFunction,
+  traktGetTrendMovieFunction,
 }: {
   scope: Construct;
   env: string;
@@ -33,6 +34,7 @@ export const apiGatewayConstruct = ({
   deleteFavoriteItemFunction: lambda.Function;
   createIgnoreItemFunction: lambda.Function;
   deleteIgnoreItemFunction: lambda.Function;
+  traktGetTrendMovieFunction: lambda.Function;
 }) => {
   // create api gateway
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -155,6 +157,13 @@ export const apiGatewayConstruct = ({
     traktSearchMovieFunction
   );
   traktSearchMovieResource.addMethod("GET", traktSearchMovieIntegration);
+
+  // route trakt get trend movie
+  const traktGetTrendMovieResource = traktMovieResource.addResource("trend");
+  const traktGetTrendMovieIntegration = new apigateway.LambdaIntegration(
+    traktGetTrendMovieFunction
+  );
+  traktGetTrendMovieResource.addMethod("GET", traktGetTrendMovieIntegration);
 
   // route favorite
   const favoriteResource = apiGateway.root.addResource("favorite");

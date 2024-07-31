@@ -38,7 +38,6 @@ const getSecretString = async (secretName: string) => {
 export const handler = async (
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResult> => {
-  const query = event.queryStringParameters?.["query"] || "";
   const page = event.queryStringParameters?.["page"] || 1;
   const limit = event.queryStringParameters?.["limit"] || 10;
   const traktSecretName = process.env.TRAKT_SECRET_NAME;
@@ -65,9 +64,7 @@ export const handler = async (
 
     // query for movies
     const response = await axios.get<TraktMovie[]>(
-      `${process.env.TRAKT_API_URL}/search/movie?${querystring.stringify({
-        query,
-        fields: "title",
+      `${process.env.TRAKT_API_URL}/movies/trending?${querystring.stringify({
         page,
         limit,
         extended: "full",
@@ -80,6 +77,8 @@ export const handler = async (
         },
       }
     );
+
+    console.log({ response });
 
     // get pagination data
     const paginationHeaders = omitBy(
@@ -107,12 +106,12 @@ export const handler = async (
       headers: paginationHeaders,
     };
   } catch (error) {
-    console.error("Error searching Trakt movie:", error);
+    console.error("Error getting Trakt trending movie:", error);
 
     return {
       statusCode: 500,
       body: JSON.stringify({
-        message: "Error searching Trakt movie",
+        message: "Error getting Trakt trending movie",
       }),
     };
   }

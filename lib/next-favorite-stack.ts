@@ -19,6 +19,7 @@ import { createFavoriteItemConstruct } from "./constructs/favorite/create";
 import { deleteFavoriteItemConstruct } from "./constructs/favorite/delete";
 import { createIgnoreItemConstruct } from "./constructs/ignore/create";
 import { deleteIgnoreItemConstruct } from "./constructs/ignore/delete";
+import { traktGetTrendMovieConstruct } from "./constructs/trakt/get-trend-movie";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -124,13 +125,13 @@ export class NextFavoriteStack extends cdk.Stack {
       role: checkAdminGroupRole,
     });
 
-    // Trakt API Search construct
+    // Trakt Search Movie construct
     const { traktSearchMovieFunction } = traktSearchMovieConstruct({
       scope: this,
       env,
     });
 
-    // Assign read permission from trakt api secret to trakt api search function
+    // Assign read permission from trakt api secret to trakt search movie function
     const traktApiSecretId = `NF-TraktApiKeySecret-${env}`;
     const traktApiKeySecret = secretsmanager.Secret.fromSecretNameV2(
       this,
@@ -139,7 +140,7 @@ export class NextFavoriteStack extends cdk.Stack {
     );
     traktApiKeySecret.grantRead(traktSearchMovieFunction);
 
-    // Assign read permission from tmdb api secret to trakt api search function
+    // Assign read permission from tmdb api secret to trakt search movie function
     const tmdbApiSecretId = `NF-TmdbApiKeySecret-${env}`;
     const tmdbApiKeySecret = secretsmanager.Secret.fromSecretNameV2(
       this,
@@ -147,6 +148,18 @@ export class NextFavoriteStack extends cdk.Stack {
       tmdbApiSecretId
     );
     tmdbApiKeySecret.grantRead(traktSearchMovieFunction);
+
+    // Trakt Get Trend Movie construct
+    const { traktGetTrendMovieFunction } = traktGetTrendMovieConstruct({
+      scope: this,
+      env,
+    });
+
+    // Assign read permission from trakt api secret to trakt get trend movie function
+    traktApiKeySecret.grantRead(traktGetTrendMovieFunction);
+
+    // Assign read permission from tmdb api secret to trakt search movie function
+    tmdbApiKeySecret.grantRead(traktGetTrendMovieFunction);
 
     // Create Favorite Item construct
     const { createFavoriteItemFunction } = createFavoriteItemConstruct({
@@ -196,6 +209,7 @@ export class NextFavoriteStack extends cdk.Stack {
       deleteFavoriteItemFunction,
       createIgnoreItemFunction,
       deleteIgnoreItemFunction,
+      traktGetTrendMovieFunction,
     });
   }
 }
