@@ -42,12 +42,30 @@ export const dynamoTableConstruct = ({
     removalPolicy,
   });
 
+  favoriteTable.addGlobalSecondaryIndex({
+    indexName: "userId_recommendSourceId_itemId",
+    partitionKey: {
+      name: "userId_recommendSourceId_itemId",
+      type: dynamodb.AttributeType.STRING,
+    },
+    projectionType: dynamodb.ProjectionType.ALL,
+  });
+
   const ignoreTableName = `NF-IgnoreTable-${env}`;
   const ignoreTable = new dynamodb.Table(scope, ignoreTableName, {
     tableName: ignoreTableName,
     partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
     billingMode: cdk.aws_dynamodb.BillingMode.PAY_PER_REQUEST,
     removalPolicy,
+  });
+
+  ignoreTable.addGlobalSecondaryIndex({
+    indexName: "userId_recommendSourceId_itemId",
+    partitionKey: {
+      name: "userId_recommendSourceId_itemId",
+      type: dynamodb.AttributeType.STRING,
+    },
+    projectionType: dynamodb.ProjectionType.ALL,
   });
 
   new cdk.CfnOutput(scope, `NF-UserTableArn-${env}`, {

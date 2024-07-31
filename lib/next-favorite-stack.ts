@@ -154,7 +154,7 @@ export class NextFavoriteStack extends cdk.Stack {
       env,
       tableName: favoriteTable.tableName,
     });
-    favoriteTable.grantWriteData(createFavoriteItemFunction);
+    favoriteTable.grantReadWriteData(createFavoriteItemFunction);
 
     // Delete Favorite Item construct
     const { deleteFavoriteItemFunction } = deleteFavoriteItemConstruct({
@@ -170,7 +170,7 @@ export class NextFavoriteStack extends cdk.Stack {
       env,
       tableName: ignoreTable.tableName,
     });
-    ignoreTable.grantWriteData(createIgnoreItemFunction);
+    ignoreTable.grantReadWriteData(createIgnoreItemFunction);
 
     // Delete Ignore Item construct
     const { deleteIgnoreItemFunction } = deleteIgnoreItemConstruct({
