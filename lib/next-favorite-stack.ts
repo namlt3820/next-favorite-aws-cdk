@@ -20,6 +20,7 @@ import { deleteFavoriteItemConstruct } from "./constructs/favorite/delete";
 import { createIgnoreItemConstruct } from "./constructs/ignore/create";
 import { deleteIgnoreItemConstruct } from "./constructs/ignore/delete";
 import { traktGetTrendMovieConstruct } from "./constructs/trakt/get-trend-movie";
+import { traktRecommendMovieConstruct } from "./constructs/trakt/recommend-movie";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -158,8 +159,24 @@ export class NextFavoriteStack extends cdk.Stack {
     // Assign read permission from trakt api secret to trakt get trend movie function
     traktApiKeySecret.grantRead(traktGetTrendMovieFunction);
 
-    // Assign read permission from tmdb api secret to trakt search movie function
+    // Assign read permission from tmdb api secret to get trend movie function
     tmdbApiKeySecret.grantRead(traktGetTrendMovieFunction);
+
+    // Trakt Recommend Movie Construct
+    const { traktRecommendMovieFunction } = traktRecommendMovieConstruct({
+      scope: this,
+      env,
+      favoriteTableName: favoriteTable.tableName,
+      ignoreTableName: ignoreTable.tableName,
+    });
+    favoriteTable.grantReadData(traktRecommendMovieFunction);
+    ignoreTable.grantReadData(traktRecommendMovieFunction);
+
+    // Assign read permission from trakt api secret to trakt recommend movie function
+    traktApiKeySecret.grantRead(traktRecommendMovieFunction);
+
+    // Assign read permission from tmdb api secret to trakt recommend movie function
+    tmdbApiKeySecret.grantRead(traktRecommendMovieFunction);
 
     // Create Favorite Item construct
     const { createFavoriteItemFunction } = createFavoriteItemConstruct({
@@ -210,6 +227,7 @@ export class NextFavoriteStack extends cdk.Stack {
       createIgnoreItemFunction,
       deleteIgnoreItemFunction,
       traktGetTrendMovieFunction,
+      traktRecommendMovieFunction,
     });
   }
 }

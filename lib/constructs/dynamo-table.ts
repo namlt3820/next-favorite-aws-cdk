@@ -51,6 +51,15 @@ export const dynamoTableConstruct = ({
     projectionType: dynamodb.ProjectionType.ALL,
   });
 
+  favoriteTable.addGlobalSecondaryIndex({
+    indexName: "userId_recommendSourceId",
+    partitionKey: {
+      name: "userId_recommendSourceId",
+      type: dynamodb.AttributeType.STRING,
+    },
+    projectionType: dynamodb.ProjectionType.ALL,
+  });
+
   const ignoreTableName = `NF-IgnoreTable-${env}`;
   const ignoreTable = new dynamodb.Table(scope, ignoreTableName, {
     tableName: ignoreTableName,

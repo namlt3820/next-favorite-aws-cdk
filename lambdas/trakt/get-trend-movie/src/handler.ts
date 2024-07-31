@@ -78,8 +78,6 @@ export const handler = async (
       }
     );
 
-    console.log({ response });
-
     // get pagination data
     const paginationHeaders = omitBy(
       pick(response.headers, [

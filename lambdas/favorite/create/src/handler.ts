@@ -79,6 +79,7 @@ export const handler = async (
       itemId,
       id,
       userId_recommendSourceId_itemId: `${userId}_${recommendSourceId}_${itemId}`,
+      userId_recommendSourceId: `${userId}_${recommendSourceId}`,
     },
   };
   const command = new PutCommand(putInput);
@@ -94,7 +95,7 @@ export const handler = async (
   } catch (error) {
     console.log({ error });
     return {
-      statusCode: 400,
+      statusCode: 500,
       body: JSON.stringify({ message: "Favorite item creation failed" }),
     };
   }

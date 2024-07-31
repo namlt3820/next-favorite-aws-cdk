@@ -78,7 +78,7 @@ export const handler = async (
   } catch (error) {
     console.log({ error });
     return {
-      statusCode: 400,
+      statusCode: 500,
       body: JSON.stringify({ message: "Login error" }),
     };
   }
