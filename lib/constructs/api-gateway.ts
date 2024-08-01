@@ -20,6 +20,7 @@ export const apiGatewayConstruct = ({
   deleteIgnoreItemFunction,
   traktGetTrendMovieFunction,
   traktRecommendMovieFunction,
+  readFavoriteItemFunction,
 }: {
   scope: Construct;
   env: string;
@@ -37,6 +38,7 @@ export const apiGatewayConstruct = ({
   deleteIgnoreItemFunction: lambda.Function;
   traktGetTrendMovieFunction: lambda.Function;
   traktRecommendMovieFunction: lambda.Function;
+  readFavoriteItemFunction: lambda.Function;
 }) => {
   // create api gateway
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -201,6 +203,17 @@ export const apiGatewayConstruct = ({
     deleteFavoriteItemFunction
   );
   favoriteResource.addMethod("DELETE", deleteFavoriteItemIntegration, {
+    authorizer: cognitoAuthorizer,
+    authorizationType: apigateway.AuthorizationType.COGNITO,
+    authorizationScopes: ["aws.cognito.signin.user.admin"],
+  });
+
+  // route list favorite item
+  const listFavoriteResource = favoriteResource.addResource("list");
+  const readFavoriteItemIntegration = new apigateway.LambdaIntegration(
+    readFavoriteItemFunction
+  );
+  listFavoriteResource.addMethod("POST", readFavoriteItemIntegration, {
     authorizer: cognitoAuthorizer,
     authorizationType: apigateway.AuthorizationType.COGNITO,
     authorizationScopes: ["aws.cognito.signin.user.admin"],

@@ -58,6 +58,10 @@ export const dynamoTableConstruct = ({
       type: dynamodb.AttributeType.STRING,
     },
     projectionType: dynamodb.ProjectionType.ALL,
+    sortKey: {
+      name: "createdAt",
+      type: dynamodb.AttributeType.NUMBER,
+    },
   });
 
   const ignoreTableName = `NF-IgnoreTable-${env}`;

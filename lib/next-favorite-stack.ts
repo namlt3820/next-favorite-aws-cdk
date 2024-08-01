@@ -21,6 +21,7 @@ import { createIgnoreItemConstruct } from "./constructs/ignore/create";
 import { deleteIgnoreItemConstruct } from "./constructs/ignore/delete";
 import { traktGetTrendMovieConstruct } from "./constructs/trakt/get-trend-movie";
 import { traktRecommendMovieConstruct } from "./constructs/trakt/recommend-movie";
+import { readFavoriteItemConstruct } from "./constructs/favorite/read";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -194,6 +195,14 @@ export class NextFavoriteStack extends cdk.Stack {
     });
     favoriteTable.grantReadWriteData(deleteFavoriteItemFunction);
 
+    // Read Favorite Item construct
+    const { readFavoriteItemFunction } = readFavoriteItemConstruct({
+      scope: this,
+      env,
+      tableName: favoriteTable.tableName,
+    });
+    favoriteTable.grantReadData(readFavoriteItemFunction);
+
     // Create Ignore Item construct
     const { createIgnoreItemFunction } = createIgnoreItemConstruct({
       scope: this,
@@ -228,6 +237,7 @@ export class NextFavoriteStack extends cdk.Stack {
       deleteIgnoreItemFunction,
       traktGetTrendMovieFunction,
       traktRecommendMovieFunction,
+      readFavoriteItemFunction,
     });
   }
 }

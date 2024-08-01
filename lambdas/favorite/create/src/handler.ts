@@ -71,6 +71,7 @@ export const handler = async (
   }
 
   const id = uuidv4();
+  const createdAt = Math.floor(Date.now() / 1000);
   const putInput: PutCommandInput = {
     TableName: process.env.TABLE_NAME!,
     Item: {
@@ -80,6 +81,7 @@ export const handler = async (
       id,
       userId_recommendSourceId_itemId: `${userId}_${recommendSourceId}_${itemId}`,
       userId_recommendSourceId: `${userId}_${recommendSourceId}`,
+      createdAt,
     },
   };
   const command = new PutCommand(putInput);
