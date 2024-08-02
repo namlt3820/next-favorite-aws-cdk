@@ -8,23 +8,22 @@ import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import { TraktMovie, TmdbMovie } from "./types";
 import pick from "lodash/pick";
 import omitBy from "lodash/omitBy";
+// @ts-ignore
+import { getTmdbPoster } from "/opt/nodejs/get-tmdb-poster";
 
 const client = new SecretsManagerClient({ region: process.env.REGION });
 
 const getMoviePoster = async (movie: TraktMovie, tmdbApiKey: string) => {
   const tmdbId = movie.movie.ids.tmdb;
 
-  if (tmdbId) {
-    const response = await axios.get<TmdbMovie>(
-      `${process.env.TMDB_API_URL}/movie/${tmdbId}?${querystring.stringify({
-        api_key: tmdbApiKey,
-      })}`
-    );
-
-    movie.movie.poster = response.data?.poster_path
-      ? `${process.env.TMDB_IMAGE_URL}/w200${response.data?.poster_path}`
-      : "";
-  }
+  movie.movie.poster = tmdbId
+    ? await getTmdbPoster({
+        tmdbId,
+        tmdbApiKey,
+        tmdbApiUrl: process.env.TMDB_API_URL,
+        tmdbImageUrl: process.env.TMDB_IMAGE_URL,
+      })
+    : "";
 
   return movie;
 };

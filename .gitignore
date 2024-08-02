@@ -1,6 +1,7 @@
 *.js
 !build-lambdas.js
 !jest.config.js
+!layer/build-layer.js
 *.d.ts
 node_modules
 .DS_Store

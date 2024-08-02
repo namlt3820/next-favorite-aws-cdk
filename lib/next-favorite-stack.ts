@@ -23,6 +23,7 @@ import { traktGetTrendMovieConstruct } from "./constructs/trakt/get-trend-movie"
 import { traktRecommendMovieConstruct } from "./constructs/trakt/recommend-movie";
 import { readFavoriteItemConstruct } from "./constructs/favorite/read";
 import { readIgnoreItemConstruct } from "./constructs/ignore/read";
+import { lambdaLayerConstruct } from "./constructs/lambda-layer";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -128,10 +129,14 @@ export class NextFavoriteStack extends cdk.Stack {
       role: checkAdminGroupRole,
     });
 
+    // Lambda Layer construct
+    const { lambdaLayer } = lambdaLayerConstruct({ scope: this, env });
+
     // Trakt Search Movie construct
     const { traktSearchMovieFunction } = traktSearchMovieConstruct({
       scope: this,
       env,
+      layer: lambdaLayer,
     });
 
     // Assign read permission from trakt api secret to trakt search movie function
