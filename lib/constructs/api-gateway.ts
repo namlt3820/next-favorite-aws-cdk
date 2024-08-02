@@ -25,6 +25,7 @@ export const apiGatewayConstruct = ({
   traktGetTrendShowFunction,
   traktRecommendShowFunction,
   traktSearchShowFunction,
+  jikanSearchAnimeFunction,
 }: {
   scope: Construct;
   env: string;
@@ -47,6 +48,7 @@ export const apiGatewayConstruct = ({
   traktRecommendShowFunction: lambda.Function;
   traktGetTrendShowFunction: lambda.Function;
   traktSearchShowFunction: lambda.Function;
+  jikanSearchAnimeFunction: lambda.Function;
 }) => {
   // create api gateway
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -220,6 +222,19 @@ export const apiGatewayConstruct = ({
     authorizationType: apigateway.AuthorizationType.COGNITO,
     authorizationScopes: ["aws.cognito.signin.user.admin"],
   });
+
+  // route jikan
+  const jikanResource = apiGateway.root.addResource("jikan");
+
+  // route jikan anime
+  const jikanAnimeResource = jikanResource.addResource("anime");
+
+  // route jikan search anime
+  const jikanSearchAnimeResource = jikanAnimeResource.addResource("search");
+  const jikanSearchAnimeIntegration = new apigateway.LambdaIntegration(
+    jikanSearchAnimeFunction
+  );
+  jikanSearchAnimeResource.addMethod("GET", jikanSearchAnimeIntegration);
 
   // route favorite
   const favoriteResource = apiGateway.root.addResource("favorite");

@@ -26,6 +26,7 @@ import { readIgnoreItemConstruct } from "./constructs/ignore/read";
 import { traktSearchShowConstruct } from "./constructs/trakt/search-show";
 import { traktGetTrendShowConstruct } from "./constructs/trakt/get-trend-show";
 import { traktRecommendShowConstruct } from "./constructs/trakt/recommend-show";
+import { jikanSearchAnimeConstruct } from "./constructs/jikan/search-anime";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -271,6 +272,12 @@ export class NextFavoriteStack extends cdk.Stack {
     });
     ignoreTable.grantReadData(readIgnoreItemFunction);
 
+    // Jikan Search Anime Construct
+    const { jikanSearchAnimeFunction } = jikanSearchAnimeConstruct({
+      scope: this,
+      env,
+    });
+
     // API Gateway construct
     apiGatewayConstruct({
       scope: this,
@@ -294,6 +301,7 @@ export class NextFavoriteStack extends cdk.Stack {
       traktRecommendShowFunction,
       traktGetTrendShowFunction,
       traktSearchShowFunction,
+      jikanSearchAnimeFunction,
     });
   }
 }
