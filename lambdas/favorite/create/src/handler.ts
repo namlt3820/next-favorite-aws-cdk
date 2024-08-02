@@ -72,6 +72,7 @@ export const handler = async (
 
   const id = uuidv4();
   const createdAt = Math.floor(Date.now() / 1000);
+
   const putInput: PutCommandInput = {
     TableName: process.env.TABLE_NAME!,
     Item: {

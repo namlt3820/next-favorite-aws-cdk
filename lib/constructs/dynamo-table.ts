@@ -11,6 +11,9 @@ export const dynamoTableConstruct = ({
   env: string;
   removalPolicy: cdk.RemovalPolicy;
 }) => {
+  /**
+   * User table
+   */
   const userTableName = `NF-UserTable-${env}`;
   const userTable = new dynamodb.Table(scope, userTableName, {
     tableName: userTableName,
@@ -19,6 +22,13 @@ export const dynamoTableConstruct = ({
     removalPolicy,
   });
 
+  new cdk.CfnOutput(scope, `NF-UserTableArn-${env}`, {
+    value: userTable.tableArn,
+  });
+
+  /**
+   * Recommend source table
+   */
   const recommendSourceTableName = `NF-RecommendSourceTable-${env}`;
   const recommendSourceTable = new dynamodb.Table(
     scope,
@@ -34,6 +44,13 @@ export const dynamoTableConstruct = ({
     }
   );
 
+  new cdk.CfnOutput(scope, `NF-RecommendSourceTableArn-${env}`, {
+    value: recommendSourceTable.tableArn,
+  });
+
+  /**
+   * Favorite table
+   */
   const favoriteTableName = `NF-FavoriteTable-${env}`;
   const favoriteTable = new dynamodb.Table(scope, favoriteTableName, {
     tableName: favoriteTableName,
@@ -64,6 +81,13 @@ export const dynamoTableConstruct = ({
     },
   });
 
+  new cdk.CfnOutput(scope, `NF-FavoriteTableArn-${env}`, {
+    value: favoriteTable.tableArn,
+  });
+
+  /**
+   * Ignore table
+   */
   const ignoreTableName = `NF-IgnoreTable-${env}`;
   const ignoreTable = new dynamodb.Table(scope, ignoreTableName, {
     tableName: ignoreTableName,
@@ -81,16 +105,17 @@ export const dynamoTableConstruct = ({
     projectionType: dynamodb.ProjectionType.ALL,
   });
 
-  new cdk.CfnOutput(scope, `NF-UserTableArn-${env}`, {
-    value: userTable.tableArn,
-  });
-
-  new cdk.CfnOutput(scope, `NF-RecommendSourceTableArn-${env}`, {
-    value: recommendSourceTable.tableArn,
-  });
-
-  new cdk.CfnOutput(scope, `NF-FavoriteTableArn-${env}`, {
-    value: favoriteTable.tableArn,
+  ignoreTable.addGlobalSecondaryIndex({
+    indexName: "userId_recommendSourceId",
+    partitionKey: {
+      name: "userId_recommendSourceId",
+      type: dynamodb.AttributeType.STRING,
+    },
+    projectionType: dynamodb.ProjectionType.ALL,
+    sortKey: {
+      name: "createdAt",
+      type: dynamodb.AttributeType.NUMBER,
+    },
   });
 
   new cdk.CfnOutput(scope, `NF-IgnoreTableArn-${env}`, {
