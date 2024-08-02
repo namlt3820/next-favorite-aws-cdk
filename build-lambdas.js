@@ -53,6 +53,3 @@ function traverseAndBuild(dir, currentDepth = 0) {
 
 // Start the process from the base directory
 traverseAndBuild(baseDir);
-
-// Build layers
-runBuildInDir(path.join(__dirname, "layer"));

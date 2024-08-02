@@ -5,11 +5,9 @@ import * as cdk from "aws-cdk-lib";
 export const traktSearchMovieConstruct = ({
   scope,
   env,
-  layer,
 }: {
   scope: Construct;
   env: string;
-  layer?: lambda.ILayerVersion;
 }) => {
   const region = process.env.AWS_REGION!;
   const traktSecretName = `NF-TraktApiKeySecret-${env}`;
@@ -33,7 +31,6 @@ export const traktSearchMovieConstruct = ({
         TRAKT_SECRET_NAME: traktSecretName,
         TMDB_SECRET_NAME: tmdbSecretName,
       },
-      layers: layer ? [layer] : [],
       timeout: cdk.Duration.seconds(10),
     }
   );

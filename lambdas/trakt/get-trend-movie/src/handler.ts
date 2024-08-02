@@ -15,15 +15,20 @@ const getMoviePoster = async (movie: TraktMovie, tmdbApiKey: string) => {
   const tmdbId = movie.movie.ids.tmdb;
 
   if (tmdbId) {
-    const response = await axios.get<TmdbMovie>(
-      `${process.env.TMDB_API_URL}/movie/${tmdbId}?${querystring.stringify({
-        api_key: tmdbApiKey,
-      })}`
-    );
+    try {
+      const response = await axios.get<TmdbMovie>(
+        `${process.env.TMDB_API_URL}/movie/${tmdbId}?${querystring.stringify({
+          api_key: tmdbApiKey,
+        })}`
+      );
 
-    movie.movie.poster = response.data?.poster_path
-      ? `${process.env.TMDB_IMAGE_URL}/w200${response.data?.poster_path}`
-      : "";
+      movie.movie.poster = response.data?.poster_path
+        ? `${process.env.TMDB_IMAGE_URL}/w200${response.data?.poster_path}`
+        : "";
+    } catch (error) {
+      console.log({ error });
+      movie.movie.poster = "";
+    }
   }
 
   return movie;

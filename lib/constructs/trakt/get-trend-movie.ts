@@ -1,5 +1,6 @@
 import { Construct } from "constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as cdk from "aws-cdk-lib";
 
 export const traktGetTrendMovieConstruct = ({
   scope,
@@ -30,6 +31,7 @@ export const traktGetTrendMovieConstruct = ({
         TRAKT_SECRET_NAME: traktSecretName,
         TMDB_SECRET_NAME: tmdbSecretName,
       },
+      timeout: cdk.Duration.seconds(10),
     }
   );
 
