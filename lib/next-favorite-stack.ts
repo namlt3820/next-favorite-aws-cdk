@@ -23,6 +23,9 @@ import { traktGetTrendMovieConstruct } from "./constructs/trakt/get-trend-movie"
 import { traktRecommendMovieConstruct } from "./constructs/trakt/recommend-movie";
 import { readFavoriteItemConstruct } from "./constructs/favorite/read";
 import { readIgnoreItemConstruct } from "./constructs/ignore/read";
+import { traktSearchShowConstruct } from "./constructs/trakt/search-show";
+import { traktGetTrendShowConstruct } from "./constructs/trakt/get-trend-show";
+import { traktRecommendShowConstruct } from "./constructs/trakt/recommend-show";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -180,6 +183,46 @@ export class NextFavoriteStack extends cdk.Stack {
     // Assign read permission from tmdb api secret to trakt recommend movie function
     tmdbApiKeySecret.grantRead(traktRecommendMovieFunction);
 
+    // Trakt Search Show construct
+    const { traktSearchShowFunction } = traktSearchShowConstruct({
+      scope: this,
+      env,
+    });
+
+    // Assign read permission from trakt api secret to trakt search show function
+    traktApiKeySecret.grantRead(traktSearchShowFunction);
+
+    // Assign read permission from tmdb api secret to trakt search show function
+    tmdbApiKeySecret.grantRead(traktSearchShowFunction);
+
+    // Trakt Get Trend Show construct
+    const { traktGetTrendShowFunction } = traktGetTrendShowConstruct({
+      scope: this,
+      env,
+    });
+
+    // Assign read permission from trakt api secret to trakt get trend show function
+    traktApiKeySecret.grantRead(traktGetTrendShowFunction);
+
+    // Assign read permission from tmdb api secret to get trend show function
+    tmdbApiKeySecret.grantRead(traktGetTrendShowFunction);
+
+    // Trakt Recommend Show Construct
+    const { traktRecommendShowFunction } = traktRecommendShowConstruct({
+      scope: this,
+      env,
+      favoriteTableName: favoriteTable.tableName,
+      ignoreTableName: ignoreTable.tableName,
+    });
+    favoriteTable.grantReadData(traktRecommendShowFunction);
+    ignoreTable.grantReadData(traktRecommendShowFunction);
+
+    // Assign read permission from trakt api secret to trakt recommend show function
+    traktApiKeySecret.grantRead(traktRecommendShowFunction);
+
+    // Assign read permission from tmdb api secret to trakt recommend show function
+    tmdbApiKeySecret.grantRead(traktRecommendShowFunction);
+
     // Create Favorite Item construct
     const { createFavoriteItemFunction } = createFavoriteItemConstruct({
       scope: this,
@@ -248,6 +291,9 @@ export class NextFavoriteStack extends cdk.Stack {
       traktRecommendMovieFunction,
       readFavoriteItemFunction,
       readIgnoreItemFunction,
+      traktRecommendShowFunction,
+      traktGetTrendShowFunction,
+      traktSearchShowFunction,
     });
   }
 }

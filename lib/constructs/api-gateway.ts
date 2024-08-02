@@ -22,6 +22,9 @@ export const apiGatewayConstruct = ({
   traktRecommendMovieFunction,
   readFavoriteItemFunction,
   readIgnoreItemFunction,
+  traktGetTrendShowFunction,
+  traktRecommendShowFunction,
+  traktSearchShowFunction,
 }: {
   scope: Construct;
   env: string;
@@ -41,6 +44,9 @@ export const apiGatewayConstruct = ({
   traktRecommendMovieFunction: lambda.Function;
   readFavoriteItemFunction: lambda.Function;
   readIgnoreItemFunction: lambda.Function;
+  traktRecommendShowFunction: lambda.Function;
+  traktGetTrendShowFunction: lambda.Function;
+  traktSearchShowFunction: lambda.Function;
 }) => {
   // create api gateway
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -186,6 +192,34 @@ export const apiGatewayConstruct = ({
       authorizationScopes: ["aws.cognito.signin.user.admin"],
     }
   );
+
+  // route trakt show
+  const traktShowResource = traktResource.addResource("show");
+
+  // route trakt search show
+  const traktSearchShowResource = traktShowResource.addResource("search");
+  const traktSearchShowIntegration = new apigateway.LambdaIntegration(
+    traktSearchShowFunction
+  );
+  traktSearchShowResource.addMethod("GET", traktSearchShowIntegration);
+
+  // route trakt get trend show
+  const traktGetTrendShowResource = traktShowResource.addResource("trend");
+  const traktGetTrendShowIntegration = new apigateway.LambdaIntegration(
+    traktGetTrendShowFunction
+  );
+  traktGetTrendShowResource.addMethod("GET", traktGetTrendShowIntegration);
+
+  // route trakt recommend show
+  const traktRecommendShowResource = traktShowResource.addResource("recommend");
+  const traktRecommendShowIntegration = new apigateway.LambdaIntegration(
+    traktRecommendShowFunction
+  );
+  traktRecommendShowResource.addMethod("POST", traktRecommendShowIntegration, {
+    authorizer: cognitoAuthorizer,
+    authorizationType: apigateway.AuthorizationType.COGNITO,
+    authorizationScopes: ["aws.cognito.signin.user.admin"],
+  });
 
   // route favorite
   const favoriteResource = apiGateway.root.addResource("favorite");

@@ -5,33 +5,33 @@ import {
   GetSecretValueCommand,
 } from "@aws-sdk/client-secrets-manager";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { TraktMovie, TmdbMovie } from "./types";
+import { TraktShow, TmdbTv } from "./types";
 import pick from "lodash/pick";
 import omitBy from "lodash/omitBy";
 
 const client = new SecretsManagerClient({ region: process.env.REGION });
 
-const getMoviePoster = async (movie: TraktMovie, tmdbApiKey: string) => {
-  const tmdbId = movie.movie.ids.tmdb;
+const getShowPoster = async (show: TraktShow, tmdbApiKey: string) => {
+  const tmdbId = show.show.ids.tmdb;
 
   if (tmdbId) {
     try {
-      const response = await axios.get<TmdbMovie>(
-        `${process.env.TMDB_API_URL}/movie/${tmdbId}?${querystring.stringify({
+      const response = await axios.get<TmdbTv>(
+        `${process.env.TMDB_API_URL}/tv/${tmdbId}?${querystring.stringify({
           api_key: tmdbApiKey,
         })}`
       );
 
-      movie.movie.poster = response.data?.poster_path
+      show.show.poster = response.data?.poster_path
         ? `${process.env.TMDB_IMAGE_URL}/w200${response.data?.poster_path}`
         : "";
     } catch (error) {
       console.log({ error });
-      movie.movie.poster = "";
+      show.show.poster = "";
     }
   }
 
-  return movie;
+  return show;
 };
 
 const getSecretString = async (secretName: string) => {
@@ -43,7 +43,6 @@ const getSecretString = async (secretName: string) => {
 export const handler = async (
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResult> => {
-  const query = event.queryStringParameters?.["query"] || "";
   const page = event.queryStringParameters?.["page"] || 1;
   const limit = event.queryStringParameters?.["limit"] || 10;
   const traktSecretName = process.env.TRAKT_SECRET_NAME;
@@ -68,10 +67,9 @@ export const handler = async (
       throw new Error("api key is undefined");
     }
 
-    // query for movies
-    const response = await axios.get<TraktMovie[]>(
-      `${process.env.TRAKT_API_URL}/search/movie?${querystring.stringify({
-        query,
+    // query for shows
+    const response = await axios.get<TraktShow[]>(
+      `${process.env.TRAKT_API_URL}/shows/trending?${querystring.stringify({
         page,
         limit,
         extended: "full",
@@ -96,11 +94,11 @@ export const handler = async (
       (value) => value === null
     );
 
-    // query for movie poster
+    // query for show poster
     if (response.data.length) {
       response.data = await Promise.all(
-        response.data.map(async (movie) => {
-          return await getMoviePoster(movie, tmdbApiKey);
+        response.data.map(async (show) => {
+          return await getShowPoster(show, tmdbApiKey);
         })
       );
     }
@@ -111,12 +109,12 @@ export const handler = async (
       headers: paginationHeaders,
     };
   } catch (error) {
-    console.error("Error searching Trakt movie:", error);
+    console.error("Error getting Trakt trending show:", error);
 
     return {
       statusCode: 500,
       body: JSON.stringify({
-        message: "Error searching Trakt movie",
+        message: "Error getting Trakt trending show",
       }),
     };
   }
