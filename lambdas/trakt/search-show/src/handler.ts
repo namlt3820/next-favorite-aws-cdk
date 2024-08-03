@@ -40,33 +40,38 @@ const getSecretString = async (secretName: string) => {
   return data.SecretString || "";
 };
 
+const getApiKeys = async () => {
+  const traktSecretName = process.env.TRAKT_SECRET_NAME;
+  const tmdbSecretName = process.env.TMDB_SECRET_NAME;
+
+  if (!traktSecretName || !tmdbSecretName) {
+    throw new Error("SECRET_NAME environment variable is not set");
+  }
+
+  const [traktApiKey, tmdbApiKey] = await Promise.all([
+    getSecretString(traktSecretName),
+    getSecretString(tmdbSecretName),
+  ]);
+
+  if (!traktApiKey || !tmdbApiKey) {
+    throw new Error("api key is undefined");
+  }
+
+  return {
+    traktApiKey,
+    tmdbApiKey,
+  };
+};
+
 export const handler = async (
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResult> => {
   const query = event.queryStringParameters?.["query"] || "";
   const page = event.queryStringParameters?.["page"] || 1;
   const limit = event.queryStringParameters?.["limit"] || 10;
-  const traktSecretName = process.env.TRAKT_SECRET_NAME;
-  const tmdbSecretName = process.env.TMDB_SECRET_NAME;
-
-  if (!traktSecretName || !tmdbSecretName) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        message: "SECRET_NAME environment variable is not set",
-      }),
-    };
-  }
 
   try {
-    const [traktApiKey, tmdbApiKey] = await Promise.all([
-      getSecretString(traktSecretName),
-      getSecretString(tmdbSecretName),
-    ]);
-
-    if (!traktApiKey || !tmdbApiKey) {
-      throw new Error("api key is undefined");
-    }
+    const { tmdbApiKey, traktApiKey } = await getApiKeys();
 
     // query for shows
     const response = await axios.get<TraktShow[]>(
