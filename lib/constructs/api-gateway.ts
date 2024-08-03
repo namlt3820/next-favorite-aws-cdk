@@ -31,6 +31,7 @@ export const apiGatewayConstruct = ({
   traktGetDetailMovieFunction,
   traktGetDetailShowFunction,
   jikanGetDetailAnimeFunction,
+  getUserFunction,
 }: {
   scope: Construct;
   env: string;
@@ -59,6 +60,7 @@ export const apiGatewayConstruct = ({
   traktGetDetailMovieFunction: lambda.Function;
   traktGetDetailShowFunction: lambda.Function;
   jikanGetDetailAnimeFunction: lambda.Function;
+  getUserFunction: lambda.Function;
 }) => {
   // create api gateway
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -146,6 +148,11 @@ export const apiGatewayConstruct = ({
       ),
     },
   });
+
+  // route get user
+  const getUserSource = authResource.addResource("profile");
+  const getUserIntegration = new apigateway.LambdaIntegration(getUserFunction);
+  getUserSource.addMethod("POST", getUserIntegration);
 
   // route recommend source
   const recommendSourceResource =

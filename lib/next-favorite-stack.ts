@@ -32,6 +32,7 @@ import { jikanGetTrendAnimeConstruct } from "./constructs/jikan/get-trend-anime"
 import { traktGetDetailMovieConstruct } from "./constructs/trakt/get-detail-movie";
 import { traktGetDetailShowConstruct } from "./constructs/trakt/get-detail-show";
 import { jikanGetDetailAnimeConstruct } from "./constructs/jikan/get-detail-anime";
+import { getUserConstruct } from "./constructs/auth/get-user";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -120,6 +121,12 @@ export class NextFavoriteStack extends cdk.Stack {
       secretName: cognitoAppClientSecret.secretName,
     });
     cognitoAppClientSecret.grantRead(userConfirmationFunction);
+
+    // Get User construct
+    const { getUserFunction } = getUserConstruct({
+      scope: this,
+      env,
+    });
 
     // Create Recommend Source construct
     const { createRecommendSourceFunction } = createRecommendSourceConstruct({
@@ -358,6 +365,7 @@ export class NextFavoriteStack extends cdk.Stack {
       jikanRecommendAnimeFunction,
       jikanGetTrendAnimeFunction,
       jikanGetDetailAnimeFunction,
+      getUserFunction,
     });
   }
 }
