@@ -29,6 +29,7 @@ import { traktRecommendShowConstruct } from "./constructs/trakt/recommend-show";
 import { jikanSearchAnimeConstruct } from "./constructs/jikan/search-anime";
 import { jikanRecommendAnimeConstruct } from "./constructs/jikan/recommend-anime";
 import { jikanGetTrendAnimeConstruct } from "./constructs/jikan/get-trend-anime";
+import { traktGetDetailMovieConstruct } from "./constructs/trakt/get-detail-movie";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -226,6 +227,18 @@ export class NextFavoriteStack extends cdk.Stack {
     // Assign read permission from tmdb api secret to trakt recommend show function
     tmdbApiKeySecret.grantRead(traktRecommendShowFunction);
 
+    // Trakt Get Trend Show construct
+    const { traktGetDetailMovieFunction } = traktGetDetailMovieConstruct({
+      scope: this,
+      env,
+    });
+
+    // Assign read permission from trakt api secret to trakt get detail show function
+    traktApiKeySecret.grantRead(traktGetDetailMovieFunction);
+
+    // Assign read permission from tmdb api secret to get trend detail function
+    tmdbApiKeySecret.grantRead(traktGetDetailMovieFunction);
+
     // Create Favorite Item construct
     const { createFavoriteItemFunction } = createFavoriteItemConstruct({
       scope: this,
@@ -322,6 +335,7 @@ export class NextFavoriteStack extends cdk.Stack {
       jikanSearchAnimeFunction,
       jikanRecommendAnimeFunction,
       jikanGetTrendAnimeFunction,
+      traktGetDetailMovieFunction,
     });
   }
 }

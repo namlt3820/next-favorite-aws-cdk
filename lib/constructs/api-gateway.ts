@@ -28,6 +28,7 @@ export const apiGatewayConstruct = ({
   jikanSearchAnimeFunction,
   jikanRecommendAnimeFunction,
   jikanGetTrendAnimeFunction,
+  traktGetDetailMovieFunction,
 }: {
   scope: Construct;
   env: string;
@@ -53,6 +54,7 @@ export const apiGatewayConstruct = ({
   jikanSearchAnimeFunction: lambda.Function;
   jikanRecommendAnimeFunction: lambda.Function;
   jikanGetTrendAnimeFunction: lambda.Function;
+  traktGetDetailMovieFunction: lambda.Function;
 }) => {
   // create api gateway
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -198,6 +200,13 @@ export const apiGatewayConstruct = ({
       authorizationScopes: ["aws.cognito.signin.user.admin"],
     }
   );
+
+  // route trakt get detail movie
+  const traktGetDetailMovieResource = traktMovieResource.addResource("detail");
+  const traktGetDetailMovieIntegration = new apigateway.LambdaIntegration(
+    traktGetDetailMovieFunction
+  );
+  traktGetDetailMovieResource.addMethod("POST", traktGetDetailMovieIntegration);
 
   // route trakt show
   const traktShowResource = traktResource.addResource("show");

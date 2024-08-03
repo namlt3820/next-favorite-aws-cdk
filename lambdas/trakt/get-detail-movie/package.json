@@ -1,5 +1,5 @@
 {
-  "name": "trakt-get-trend-show",
+  "name": "trakt-get-detail-movie",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,14 +12,12 @@
   "license": "ISC",
   "devDependencies": {
     "@types/aws-lambda": "^8.10.141",
-    "@types/lodash": "^4.17.7",
     "@types/node": "^20.14.11",
     "esbuild": "^0.23.0",
     "typescript": "^5.5.4"
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.620.0",
-    "axios": "^1.7.2",
-    "lodash": "^4.17.21"
+    "axios": "^1.7.2"
   }
 }
