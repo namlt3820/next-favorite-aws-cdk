@@ -4,7 +4,7 @@ import {
   SecretsManagerClient,
   GetSecretValueCommand,
 } from "@aws-sdk/client-secrets-manager";
-import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
+import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import { TraktMovie, TmdbMovie } from "./types";
 import pick from "lodash/pick";
 import omitBy from "lodash/omitBy";

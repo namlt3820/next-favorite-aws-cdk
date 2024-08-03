@@ -4,7 +4,7 @@ import {
   PutCommand,
   PutCommandInput,
 } from "@aws-sdk/lib-dynamodb";
-import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
+import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import { v4 as uuidv4 } from "uuid";
 
 // Create a DynamoDB client
