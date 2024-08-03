@@ -33,6 +33,7 @@ import { traktGetDetailMovieConstruct } from "./constructs/trakt/get-detail-movi
 import { traktGetDetailShowConstruct } from "./constructs/trakt/get-detail-show";
 import { jikanGetDetailAnimeConstruct } from "./constructs/jikan/get-detail-anime";
 import { getUserConstruct } from "./constructs/auth/get-user";
+import { getAllRecommendSourcesConstruct } from "./constructs/recomment-source/read";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -135,6 +136,14 @@ export class NextFavoriteStack extends cdk.Stack {
       tableName: recommendSourceTable.tableName,
     });
     recommendSourceTable.grantWriteData(createRecommendSourceFunction);
+
+    // Get All Recommend Sources construct
+    const { getAllRecommendSourcesFunction } = getAllRecommendSourcesConstruct({
+      scope: this,
+      env,
+      tableName: recommendSourceTable.tableName,
+    });
+    recommendSourceTable.grantReadData(getAllRecommendSourcesFunction);
 
     // Check Admin Group construct
     const { checkAdminGroupFunction } = checkAdminGroupConstruct({
@@ -366,6 +375,7 @@ export class NextFavoriteStack extends cdk.Stack {
       jikanGetTrendAnimeFunction,
       jikanGetDetailAnimeFunction,
       getUserFunction,
+      getAllRecommendSourcesFunction,
     });
   }
 }

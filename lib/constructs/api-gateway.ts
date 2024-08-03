@@ -32,6 +32,7 @@ export const apiGatewayConstruct = ({
   traktGetDetailShowFunction,
   jikanGetDetailAnimeFunction,
   getUserFunction,
+  getAllRecommendSourcesFunction,
 }: {
   scope: Construct;
   env: string;
@@ -61,6 +62,7 @@ export const apiGatewayConstruct = ({
   traktGetDetailShowFunction: lambda.Function;
   jikanGetDetailAnimeFunction: lambda.Function;
   getUserFunction: lambda.Function;
+  getAllRecommendSourcesFunction: lambda.Function;
 }) => {
   // create api gateway
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -175,6 +177,12 @@ export const apiGatewayConstruct = ({
     authorizer: checkAdminGroupAuthorizer,
     authorizationType: apigateway.AuthorizationType.CUSTOM,
   });
+
+  // method get all recommend source
+  const getAllRecommendSourcesIntegration = new apigateway.LambdaIntegration(
+    getAllRecommendSourcesFunction
+  );
+  recommendSourceResource.addMethod("GET", getAllRecommendSourcesIntegration);
 
   // route trakt
   const traktResource = apiGateway.root.addResource("trakt");
