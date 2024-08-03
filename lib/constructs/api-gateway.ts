@@ -29,6 +29,7 @@ export const apiGatewayConstruct = ({
   jikanRecommendAnimeFunction,
   jikanGetTrendAnimeFunction,
   traktGetDetailMovieFunction,
+  traktGetDetailShowFunction,
 }: {
   scope: Construct;
   env: string;
@@ -55,6 +56,7 @@ export const apiGatewayConstruct = ({
   jikanRecommendAnimeFunction: lambda.Function;
   jikanGetTrendAnimeFunction: lambda.Function;
   traktGetDetailMovieFunction: lambda.Function;
+  traktGetDetailShowFunction: lambda.Function;
 }) => {
   // create api gateway
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -235,6 +237,13 @@ export const apiGatewayConstruct = ({
     authorizationType: apigateway.AuthorizationType.COGNITO,
     authorizationScopes: ["aws.cognito.signin.user.admin"],
   });
+
+  // route trakt get detail show
+  const traktGetDetailShowResource = traktShowResource.addResource("detail");
+  const traktGetDetailShowIntegration = new apigateway.LambdaIntegration(
+    traktGetDetailShowFunction
+  );
+  traktGetDetailShowResource.addMethod("POST", traktGetDetailShowIntegration);
 
   // route jikan
   const jikanResource = apiGateway.root.addResource("jikan");

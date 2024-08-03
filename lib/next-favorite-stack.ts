@@ -30,6 +30,7 @@ import { jikanSearchAnimeConstruct } from "./constructs/jikan/search-anime";
 import { jikanRecommendAnimeConstruct } from "./constructs/jikan/recommend-anime";
 import { jikanGetTrendAnimeConstruct } from "./constructs/jikan/get-trend-anime";
 import { traktGetDetailMovieConstruct } from "./constructs/trakt/get-detail-movie";
+import { traktGetDetailShowConstruct } from "./constructs/trakt/get-detail-show";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -187,6 +188,18 @@ export class NextFavoriteStack extends cdk.Stack {
     // Assign read permission from tmdb api secret to trakt recommend movie function
     tmdbApiKeySecret.grantRead(traktRecommendMovieFunction);
 
+    // Trakt Get Detail Movie construct
+    const { traktGetDetailMovieFunction } = traktGetDetailMovieConstruct({
+      scope: this,
+      env,
+    });
+
+    // Assign read permission from trakt api secret to trakt get detail movie function
+    traktApiKeySecret.grantRead(traktGetDetailMovieFunction);
+
+    // Assign read permission from tmdb api secret to trakt get detail movie function
+    tmdbApiKeySecret.grantRead(traktGetDetailMovieFunction);
+
     // Trakt Search Show construct
     const { traktSearchShowFunction } = traktSearchShowConstruct({
       scope: this,
@@ -227,17 +240,17 @@ export class NextFavoriteStack extends cdk.Stack {
     // Assign read permission from tmdb api secret to trakt recommend show function
     tmdbApiKeySecret.grantRead(traktRecommendShowFunction);
 
-    // Trakt Get Trend Show construct
-    const { traktGetDetailMovieFunction } = traktGetDetailMovieConstruct({
+    // Trakt Get Detail Show construct
+    const { traktGetDetailShowFunction } = traktGetDetailShowConstruct({
       scope: this,
       env,
     });
 
     // Assign read permission from trakt api secret to trakt get detail show function
-    traktApiKeySecret.grantRead(traktGetDetailMovieFunction);
+    traktApiKeySecret.grantRead(traktGetDetailShowFunction);
 
-    // Assign read permission from tmdb api secret to get trend detail function
-    tmdbApiKeySecret.grantRead(traktGetDetailMovieFunction);
+    // Assign read permission from tmdb api secret to trakt get detail show function
+    tmdbApiKeySecret.grantRead(traktGetDetailShowFunction);
 
     // Create Favorite Item construct
     const { createFavoriteItemFunction } = createFavoriteItemConstruct({
@@ -336,6 +349,7 @@ export class NextFavoriteStack extends cdk.Stack {
       jikanRecommendAnimeFunction,
       jikanGetTrendAnimeFunction,
       traktGetDetailMovieFunction,
+      traktGetDetailShowFunction,
     });
   }
 }
