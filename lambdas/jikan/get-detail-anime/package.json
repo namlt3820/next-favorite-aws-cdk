@@ -1,0 +1,22 @@
+{
+  "name": "jikan-get-detail-anime",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "prebuild": "rm -rf dist",
+    "build": "esbuild src/handler.ts --bundle --platform=node --target=es2020 --outfile=dist/handler.js "
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.141",
+    "@types/node": "^20.14.11",
+    "esbuild": "^0.23.0",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "axios": "^1.7.2"
+  }
+}

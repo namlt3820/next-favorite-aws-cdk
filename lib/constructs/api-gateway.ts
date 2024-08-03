@@ -30,6 +30,7 @@ export const apiGatewayConstruct = ({
   jikanGetTrendAnimeFunction,
   traktGetDetailMovieFunction,
   traktGetDetailShowFunction,
+  jikanGetDetailAnimeFunction,
 }: {
   scope: Construct;
   env: string;
@@ -57,6 +58,7 @@ export const apiGatewayConstruct = ({
   jikanGetTrendAnimeFunction: lambda.Function;
   traktGetDetailMovieFunction: lambda.Function;
   traktGetDetailShowFunction: lambda.Function;
+  jikanGetDetailAnimeFunction: lambda.Function;
 }) => {
   // create api gateway
   const apiGatewayId = `NF-ApiGateway-${env}`;
@@ -280,6 +282,13 @@ export const apiGatewayConstruct = ({
     jikanGetTrendAnimeFunction
   );
   jikanGetTrendAnimeResource.addMethod("GET", jikanGetTrendAnimeIntegration);
+
+  // route jikan get detail movie
+  const jikanGetDetailAnimeResource = jikanAnimeResource.addResource("detail");
+  const jikanGetDetailAnimeIntegration = new apigateway.LambdaIntegration(
+    jikanGetDetailAnimeFunction
+  );
+  jikanGetDetailAnimeResource.addMethod("POST", jikanGetDetailAnimeIntegration);
 
   // route favorite
   const favoriteResource = apiGateway.root.addResource("favorite");
