@@ -28,6 +28,7 @@ import { traktGetTrendShowConstruct } from "./constructs/trakt/get-trend-show";
 import { traktRecommendShowConstruct } from "./constructs/trakt/recommend-show";
 import { jikanSearchAnimeConstruct } from "./constructs/jikan/search-anime";
 import { jikanRecommendAnimeConstruct } from "./constructs/jikan/recommend-anime";
+import { jikanGetTrendAnimeConstruct } from "./constructs/jikan/get-trend-anime";
 
 interface NextFavoriteProps extends cdk.StackProps {}
 
@@ -289,6 +290,12 @@ export class NextFavoriteStack extends cdk.Stack {
     favoriteTable.grantReadData(jikanRecommendAnimeFunction);
     ignoreTable.grantReadData(jikanRecommendAnimeFunction);
 
+    // Jikan Get Trend Anime construct
+    const { jikanGetTrendAnimeFunction } = jikanGetTrendAnimeConstruct({
+      scope: this,
+      env,
+    });
+
     // API Gateway construct
     apiGatewayConstruct({
       scope: this,
@@ -314,6 +321,7 @@ export class NextFavoriteStack extends cdk.Stack {
       traktSearchShowFunction,
       jikanSearchAnimeFunction,
       jikanRecommendAnimeFunction,
+      jikanGetTrendAnimeFunction,
     });
   }
 }
