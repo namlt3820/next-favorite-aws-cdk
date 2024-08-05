@@ -73,6 +73,11 @@ export const apiGatewayConstruct = ({
       dataTraceEnabled: true,
     },
     cloudWatchRole: true,
+    defaultCorsPreflightOptions: {
+      allowOrigins: ["http://localhost:3000"],
+      allowMethods: apigateway.Cors.ALL_METHODS,
+      allowHeaders: apigateway.Cors.DEFAULT_HEADERS,
+    },
   });
 
   // create request validator

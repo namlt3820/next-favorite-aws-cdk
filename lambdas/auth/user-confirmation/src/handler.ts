@@ -38,6 +38,27 @@ const calculateSecretHash = (
   return hmac.digest("base64");
 };
 
+const withCorsHeaders = (
+  event: APIGatewayEvent,
+  response: { statusCode: number; body: string }
+): APIGatewayProxyResult => {
+  const allowedOrigins = ["http://localhost:3000"];
+  const requestOrigin = event.headers.origin || "";
+
+  const isOriginAllowed = allowedOrigins.includes(requestOrigin);
+  return isOriginAllowed
+    ? {
+        ...response,
+        headers: {
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Origin": requestOrigin,
+          "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+          "Access-Control-Allow-Credentials": "true",
+        },
+      }
+    : response;
+};
+
 export const handler = async (
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -46,12 +67,12 @@ export const handler = async (
 
   const secretName = process.env.SECRET_NAME;
   if (!secretName) {
-    return {
+    return withCorsHeaders(event, {
       statusCode: 500,
       body: JSON.stringify({
         message: "SECRET_NAME environment variable is not set",
       }),
-    };
+    });
   }
 
   const secretString = await getSecretString(secretName);
@@ -68,19 +89,19 @@ export const handler = async (
     const command = new ConfirmSignUpCommand(params);
 
     await client.send(command);
-    return {
+    return withCorsHeaders(event, {
       statusCode: 200,
       body: JSON.stringify({
         message: "User confirmed successfully.",
       }),
-    };
+    });
   } catch (error) {
     console.log({ error });
-    return {
+    return withCorsHeaders(event, {
       statusCode: 500,
       body: JSON.stringify({
         message: "User confirmation failed.",
       }),
-    };
+    });
   }
 };
