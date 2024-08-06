@@ -92,6 +92,7 @@ export const userPoolConstruct = ({
       callbackUrls: [callbackUrl],
       logoutUrls: [logoutUrl],
     },
+    accessTokenValidity: cdk.Duration.hours(24),
   });
 
   // Reference an existing ACM certificate by its ARN
