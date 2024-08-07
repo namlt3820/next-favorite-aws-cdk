@@ -21,7 +21,7 @@ const getShowPoster = async (show: TraktShow, tmdbApiKey: string) => {
       );
 
       show.poster = response.data?.poster_path
-        ? `${process.env.TMDB_IMAGE_URL}/w200${response.data?.poster_path}`
+        ? `${process.env.TMDB_IMAGE_URL}/w500${response.data?.poster_path}`
         : "";
     } catch (error) {
       console.log({ error });

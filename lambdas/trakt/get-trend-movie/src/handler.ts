@@ -11,6 +11,32 @@ import omitBy from "lodash/omitBy";
 
 const client = new SecretsManagerClient({ region: process.env.REGION });
 
+const withCorsHeaders = (
+  event: APIGatewayEvent,
+  response: {
+    statusCode: number;
+    body: string;
+    headers?: { [header: string]: string | number | boolean };
+  }
+): APIGatewayProxyResult => {
+  const allowedOrigins = ["http://localhost:3000"];
+  const requestOrigin = event.headers.origin || "";
+
+  const isOriginAllowed = allowedOrigins.includes(requestOrigin);
+  return isOriginAllowed
+    ? {
+        ...response,
+        headers: {
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Origin": requestOrigin,
+          "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+          "Access-Control-Allow-Credentials": "true",
+          ...(response.headers || {}),
+        },
+      }
+    : response;
+};
+
 const getMoviePoster = async (movie: TraktMovie, tmdbApiKey: string) => {
   const tmdbId = movie.movie.ids.tmdb;
 
@@ -23,7 +49,7 @@ const getMoviePoster = async (movie: TraktMovie, tmdbApiKey: string) => {
       );
 
       movie.movie.poster = response.data?.poster_path
-        ? `${process.env.TMDB_IMAGE_URL}/w200${response.data?.poster_path}`
+        ? `${process.env.TMDB_IMAGE_URL}/w500${response.data?.poster_path}`
         : "";
     } catch (error) {
       console.log({ error });
@@ -108,19 +134,19 @@ export const handler = async (
       );
     }
 
-    return {
+    return withCorsHeaders(event, {
       statusCode: 200,
       body: JSON.stringify(response.data),
       headers: paginationHeaders,
-    };
+    });
   } catch (error) {
     console.error("Error getting Trakt trending movie:", error);
 
-    return {
+    return withCorsHeaders(event, {
       statusCode: 500,
       body: JSON.stringify({
         message: "Error getting Trakt trending movie",
       }),
-    };
+    });
   }
 };
