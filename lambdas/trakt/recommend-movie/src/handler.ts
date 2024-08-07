@@ -36,7 +36,7 @@ const getMoviePoster = async (movie: TraktMovie, tmdbApiKey: string) => {
       );
 
       movie.poster = response.data?.poster_path
-        ? `${process.env.TMDB_IMAGE_URL}/w500${response.data?.poster_path}`
+        ? `${process.env.TMDB_IMAGE_URL}/w200${response.data?.poster_path}`
         : "";
     } catch (error) {
       console.log({ error });

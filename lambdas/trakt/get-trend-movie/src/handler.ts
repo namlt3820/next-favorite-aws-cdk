@@ -31,6 +31,8 @@ const withCorsHeaders = (
           "Access-Control-Allow-Origin": requestOrigin,
           "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
           "Access-Control-Allow-Credentials": "true",
+          "Access-Control-Expose-Headers":
+            "X-Pagination-Page, X-Pagination-Page-Count, X-Pagination-Limit, X-Pagination-Item-Count",
           ...(response.headers || {}),
         },
       }
@@ -49,7 +51,7 @@ const getMoviePoster = async (movie: TraktMovie, tmdbApiKey: string) => {
       );
 
       movie.movie.poster = response.data?.poster_path
-        ? `${process.env.TMDB_IMAGE_URL}/w500${response.data?.poster_path}`
+        ? `${process.env.TMDB_IMAGE_URL}/w200${response.data?.poster_path}`
         : "";
     } catch (error) {
       console.log({ error });
