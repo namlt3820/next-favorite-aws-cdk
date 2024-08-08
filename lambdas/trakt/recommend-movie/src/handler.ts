@@ -110,6 +110,7 @@ const getRecommendMovies = async (itemId: string, traktApiKey: string) => {
       process.env.TRAKT_API_URL
     }/movies/${itemId}/related?${querystring.stringify({
       extended: "full",
+      limit: 15,
     })}`,
     {
       headers: {
