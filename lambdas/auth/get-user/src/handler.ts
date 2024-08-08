@@ -48,7 +48,7 @@ export const handler = async (
   } catch (error) {
     console.log({ error });
     return withCorsHeaders(event, {
-      statusCode: 500,
+      statusCode: 400,
       body: JSON.stringify({ message: "Get user data failed." }),
     });
   }

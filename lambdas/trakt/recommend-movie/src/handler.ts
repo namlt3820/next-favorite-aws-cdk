@@ -24,6 +24,27 @@ const docClient = DynamoDBDocumentClient.from(dynamoClient);
 // Create a Secret Manager client
 const smClient = new SecretsManagerClient({ region: process.env.REGION! });
 
+const withCorsHeaders = (
+  event: APIGatewayEvent,
+  response: { statusCode: number; body: string }
+): APIGatewayProxyResult => {
+  const allowedOrigins = ["http://localhost:3000"];
+  const requestOrigin = event.headers.origin || "";
+
+  const isOriginAllowed = allowedOrigins.includes(requestOrigin);
+  return isOriginAllowed
+    ? {
+        ...response,
+        headers: {
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Origin": requestOrigin,
+          "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+          "Access-Control-Allow-Credentials": "true",
+        },
+      }
+    : response;
+};
+
 const getMoviePoster = async (movie: TraktMovie, tmdbApiKey: string) => {
   const tmdbId = movie.ids.tmdb;
 
@@ -217,15 +238,15 @@ export const handler = async (
       })
     );
 
-    return {
+    return withCorsHeaders(event, {
       statusCode: 200,
       body: JSON.stringify(moviesNotInRegisteredList),
-    };
+    });
   } catch (error) {
     console.log({ error });
-    return {
+    return withCorsHeaders(event, {
       statusCode: 500,
       body: JSON.stringify({ message: "Recommend movies failed" }),
-    };
+    });
   }
 };
