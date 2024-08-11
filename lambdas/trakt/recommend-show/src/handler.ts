@@ -24,6 +24,27 @@ const docClient = DynamoDBDocumentClient.from(dynamoClient);
 // Create a Secret Manager client
 const smClient = new SecretsManagerClient({ region: process.env.REGION! });
 
+const withCorsHeaders = (
+  event: APIGatewayEvent,
+  response: { statusCode: number; body: string }
+): APIGatewayProxyResult => {
+  const allowedOrigins = ["http://localhost:3000"];
+  const requestOrigin = event.headers.origin || "";
+
+  const isOriginAllowed = allowedOrigins.includes(requestOrigin);
+  return isOriginAllowed
+    ? {
+        ...response,
+        headers: {
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Origin": requestOrigin,
+          "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+          "Access-Control-Allow-Credentials": "true",
+        },
+      }
+    : response;
+};
+
 const getShowPoster = async (show: TraktShow, tmdbApiKey: string) => {
   const tmdbId = show.ids.tmdb;
 
@@ -148,12 +169,12 @@ export const handler = async (
     // check if user exists
     const userId = event.requestContext?.authorizer?.claims?.sub;
     if (!userId) {
-      return {
+      return withCorsHeaders(event, {
         statusCode: 401,
         body: JSON.stringify({
           message: "Unauthorized",
         }),
-      };
+      });
     }
 
     // gather data from request and environment
@@ -178,12 +199,12 @@ export const handler = async (
     });
 
     if (!userFavoriteShows?.length) {
-      return {
+      return withCorsHeaders(event, {
         statusCode: 200,
         body: JSON.stringify({
           message: "Please search for and add a show to your favorites first.",
         }),
-      };
+      });
     }
 
     // get a random show from user favorite list
@@ -217,15 +238,15 @@ export const handler = async (
       })
     );
 
-    return {
+    return withCorsHeaders(event, {
       statusCode: 200,
       body: JSON.stringify(showsNotInRegisteredList),
-    };
+    });
   } catch (error) {
     console.log({ error });
-    return {
+    return withCorsHeaders(event, {
       statusCode: 500,
       body: JSON.stringify({ message: "Recommend shows failed" }),
-    };
+    });
   }
 };

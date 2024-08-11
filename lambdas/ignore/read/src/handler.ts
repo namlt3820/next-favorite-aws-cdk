@@ -12,6 +12,27 @@ const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
 // Create a DynamoDB DocumentClient
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
+const withCorsHeaders = (
+  event: APIGatewayEvent,
+  response: { statusCode: number; body: string }
+): APIGatewayProxyResult => {
+  const allowedOrigins = ["http://localhost:3000"];
+  const requestOrigin = event.headers.origin || "";
+
+  const isOriginAllowed = allowedOrigins.includes(requestOrigin);
+  return isOriginAllowed
+    ? {
+        ...response,
+        headers: {
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Origin": requestOrigin,
+          "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+          "Access-Control-Allow-Credentials": "true",
+        },
+      }
+    : response;
+};
+
 export const handler = async (
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -19,12 +40,12 @@ export const handler = async (
   const userId = event.requestContext?.authorizer?.claims?.sub;
 
   if (!userId) {
-    return {
+    return withCorsHeaders(event, {
       statusCode: 401,
       body: JSON.stringify({
         message: "Unauthorized",
       }),
-    };
+    });
   }
 
   const requestBody = JSON.parse(event.body || "{}");
@@ -45,11 +66,11 @@ export const handler = async (
   const queryCommand = new QueryCommand(queryInput);
   const queryOutput = await docClient.send(queryCommand);
 
-  return {
+  return withCorsHeaders(event, {
     statusCode: 200,
     body: JSON.stringify({
       items: queryOutput.Items || [],
       lastEvaluatedKey: queryOutput.LastEvaluatedKey,
     }),
-  };
+  });
 };

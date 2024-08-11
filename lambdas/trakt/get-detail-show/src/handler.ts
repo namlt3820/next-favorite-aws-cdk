@@ -9,6 +9,27 @@ import { TraktShow, TmdbTv } from "./types";
 
 const client = new SecretsManagerClient({ region: process.env.REGION });
 
+const withCorsHeaders = (
+  event: APIGatewayEvent,
+  response: { statusCode: number; body: string }
+): APIGatewayProxyResult => {
+  const allowedOrigins = ["http://localhost:3000"];
+  const requestOrigin = event.headers.origin || "";
+
+  const isOriginAllowed = allowedOrigins.includes(requestOrigin);
+  return isOriginAllowed
+    ? {
+        ...response,
+        headers: {
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Origin": requestOrigin,
+          "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+          "Access-Control-Allow-Credentials": "true",
+        },
+      }
+    : response;
+};
+
 const getShowPoster = async (show: TraktShow, tmdbApiKey: string) => {
   const tmdbId = show.ids.tmdb;
 
@@ -118,18 +139,18 @@ export const handler = async (
     const { tmdbApiKey, traktApiKey } = await getApiKeys();
     const response = await getShowDetails(itemIds, traktApiKey, tmdbApiKey);
 
-    return {
+    return withCorsHeaders(event, {
       statusCode: 200,
       body: JSON.stringify(response),
-    };
+    });
   } catch (error) {
     console.error("Error getting Trakt show detail:", error);
 
-    return {
+    return withCorsHeaders(event, {
       statusCode: 500,
       body: JSON.stringify({
         message: "Error getting Trakt show detail",
       }),
-    };
+    });
   }
 };

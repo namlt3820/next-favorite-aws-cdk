@@ -14,6 +14,27 @@ const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
 // Create a DynamoDB DocumentClient
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
+const withCorsHeaders = (
+  event: APIGatewayEvent,
+  response: { statusCode: number; body: string }
+): APIGatewayProxyResult => {
+  const allowedOrigins = ["http://localhost:3000"];
+  const requestOrigin = event.headers.origin || "";
+
+  const isOriginAllowed = allowedOrigins.includes(requestOrigin);
+  return isOriginAllowed
+    ? {
+        ...response,
+        headers: {
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Origin": requestOrigin,
+          "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+          "Access-Control-Allow-Credentials": "true",
+        },
+      }
+    : response;
+};
+
 export const handler = async (
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -41,21 +62,21 @@ export const handler = async (
     const getCommand = new GetCommand(getInput);
     const item = await docClient.send(getCommand);
     if (!item.Item) {
-      return {
+      return withCorsHeaders(event, {
         statusCode: 200,
         body: JSON.stringify({
           message: "Success",
         }),
-      };
+      });
     }
 
     if (item.Item.userId !== userId) {
-      return {
+      return withCorsHeaders(event, {
         statusCode: 401,
         body: JSON.stringify({
           message: "Unauthorized",
         }),
-      };
+      });
     }
 
     const deleteInput: DeleteCommandInput = {
@@ -67,17 +88,17 @@ export const handler = async (
     const deleteCommand = new DeleteCommand(deleteInput);
     await docClient.send(deleteCommand);
 
-    return {
+    return withCorsHeaders(event, {
       statusCode: 200,
       body: JSON.stringify({
         message: "Success",
       }),
-    };
+    });
   } catch (error) {
     console.log({ error });
-    return {
+    return withCorsHeaders(event, {
       statusCode: 500,
       body: JSON.stringify({ message: "Ignore item deletion failed" }),
-    };
+    });
   }
 };
