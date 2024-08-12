@@ -9,6 +9,27 @@ const getAnimeDetail = async (itemId: number) => {
   return response.data?.data;
 };
 
+const withCorsHeaders = (
+  event: APIGatewayEvent,
+  response: { statusCode: number; body: string }
+): APIGatewayProxyResult => {
+  const allowedOrigins = ["http://localhost:3000"];
+  const requestOrigin = event.headers.origin || "";
+
+  const isOriginAllowed = allowedOrigins.includes(requestOrigin);
+  return isOriginAllowed
+    ? {
+        ...response,
+        headers: {
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Origin": requestOrigin,
+          "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+          "Access-Control-Allow-Credentials": "true",
+        },
+      }
+    : response;
+};
+
 const getAnimeDetails = async (itemIds: number[]) => {
   const response: { itemId: number; data: any }[] = [];
 
@@ -36,18 +57,18 @@ export const handler = async (
     const { itemIds }: { itemIds: number[] } = requestBody;
     const response = await getAnimeDetails(itemIds);
 
-    return {
+    return withCorsHeaders(event, {
       statusCode: 200,
       body: JSON.stringify(response),
-    };
+    });
   } catch (error) {
     console.error("Error getting Jikan anime detail:", error);
 
-    return {
+    return withCorsHeaders(event, {
       statusCode: 500,
       body: JSON.stringify({
         message: "Error getting Jikan anime detail",
       }),
-    };
+    });
   }
 };

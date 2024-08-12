@@ -14,6 +14,27 @@ const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
 // Create a DynamoDB DocumentClient
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
+const withCorsHeaders = (
+  event: APIGatewayEvent,
+  response: { statusCode: number; body: string }
+): APIGatewayProxyResult => {
+  const allowedOrigins = ["http://localhost:3000"];
+  const requestOrigin = event.headers.origin || "";
+
+  const isOriginAllowed = allowedOrigins.includes(requestOrigin);
+  return isOriginAllowed
+    ? {
+        ...response,
+        headers: {
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Origin": requestOrigin,
+          "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+          "Access-Control-Allow-Credentials": "true",
+        },
+      }
+    : response;
+};
+
 const getUserFavoriteAnime = async ({
   userId,
   recommendSourceId,
@@ -99,12 +120,12 @@ export const handler = async (
     // check if user exists
     const userId = event.requestContext?.authorizer?.claims?.sub;
     if (!userId) {
-      return {
+      return withCorsHeaders(event, {
         statusCode: 401,
         body: JSON.stringify({
           message: "Unauthorized",
         }),
-      };
+      });
     }
 
     // gather data from request and environment
@@ -121,12 +142,12 @@ export const handler = async (
     });
 
     if (!userFavoriteAnime?.length) {
-      return {
+      return withCorsHeaders(event, {
         statusCode: 200,
         body: JSON.stringify({
           message: "Please search for and add a anime to your favorites first.",
         }),
-      };
+      });
     }
 
     // get a random anime from user favorite list
@@ -150,15 +171,15 @@ export const handler = async (
       userId,
     });
 
-    return {
+    return withCorsHeaders(event, {
       statusCode: 200,
       body: JSON.stringify(animeNotInRegisteredList),
-    };
+    });
   } catch (error) {
     console.log({ error });
-    return {
+    return withCorsHeaders(event, {
       statusCode: 500,
       body: JSON.stringify({ message: "Recommend anime failed" }),
-    };
+    });
   }
 };

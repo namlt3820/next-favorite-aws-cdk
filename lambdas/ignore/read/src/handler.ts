@@ -49,7 +49,7 @@ export const handler = async (
   }
 
   const requestBody = JSON.parse(event.body || "{}");
-  const { recommendSourceId, lastKey } = requestBody;
+  const { recommendSourceId, lastKey, limit } = requestBody;
 
   const queryInput: QueryCommandInput = {
     TableName: process.env.TABLE_NAME!,
@@ -59,7 +59,7 @@ export const handler = async (
       ":key": `${userId}_${recommendSourceId}`,
     },
     ExclusiveStartKey: lastKey,
-    Limit: 10,
+    Limit: limit || 10,
     ScanIndexForward: false,
   };
 
