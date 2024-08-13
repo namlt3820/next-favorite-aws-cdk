@@ -42,12 +42,12 @@ export const handler = async (
   try {
     const userId = event.requestContext?.authorizer?.claims?.sub;
     if (!userId) {
-      return {
+      return withCorsHeaders(event, {
         statusCode: 401,
         body: JSON.stringify({
           message: "Unauthorized",
         }),
-      };
+      });
     }
 
     const requestBody = JSON.parse(event.body || "{}");

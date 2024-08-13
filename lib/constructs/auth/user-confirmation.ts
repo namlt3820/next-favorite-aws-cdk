@@ -1,5 +1,6 @@
 import { Construct } from "constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as cdk from "aws-cdk-lib";
 
 export const userConfirmationConstruct = ({
   scope,
@@ -26,6 +27,7 @@ export const userConfirmationConstruct = ({
         REGION: region,
         SECRET_NAME: secretName,
       },
+      timeout: cdk.Duration.seconds(10),
     }
   );
 

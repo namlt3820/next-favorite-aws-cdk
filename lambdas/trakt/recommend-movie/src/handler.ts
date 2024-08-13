@@ -170,12 +170,12 @@ export const handler = async (
     // check if user exists
     const userId = event.requestContext?.authorizer?.claims?.sub;
     if (!userId) {
-      return {
+      return withCorsHeaders(event, {
         statusCode: 401,
         body: JSON.stringify({
           message: "Unauthorized",
         }),
-      };
+      });
     }
 
     // gather data from request and environment
@@ -200,12 +200,12 @@ export const handler = async (
     });
 
     if (!userFavoriteMovies?.length) {
-      return {
+      return withCorsHeaders(event, {
         statusCode: 200,
         body: JSON.stringify({
           message: "Please search for and add a movie to your favorites first.",
         }),
-      };
+      });
     }
 
     // get a random movie from user favorite list
