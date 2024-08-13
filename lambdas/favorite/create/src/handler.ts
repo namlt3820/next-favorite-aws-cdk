@@ -19,7 +19,10 @@ const withCorsHeaders = (
   event: APIGatewayEvent,
   response: { statusCode: number; body: string }
 ): APIGatewayProxyResult => {
-  const allowedOrigins = ["http://localhost:3000"];
+  const allowedOrigins = [
+    "http://localhost:3000",
+    "https://nextfavorite.gladiolus.info",
+  ];
   const requestOrigin = event.headers.origin || "";
 
   const isOriginAllowed = allowedOrigins.includes(requestOrigin);

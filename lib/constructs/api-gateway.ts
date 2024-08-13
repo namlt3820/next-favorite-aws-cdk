@@ -74,7 +74,10 @@ export const apiGatewayConstruct = ({
     },
     cloudWatchRole: true,
     defaultCorsPreflightOptions: {
-      allowOrigins: ["http://localhost:3000"],
+      allowOrigins: [
+        "http://localhost:3000",
+        "https://nextfavorite.gladiolus.info",
+      ],
       allowMethods: apigateway.Cors.ALL_METHODS,
       allowHeaders: apigateway.Cors.DEFAULT_HEADERS,
     },
