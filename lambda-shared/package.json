@@ -17,6 +17,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.629.0",
     "aws-lambda": "^1.0.7",
     "axios": "^1.7.4"
   }
