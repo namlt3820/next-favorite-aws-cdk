@@ -1,4 +1,4 @@
-interface TraktMovie {
+export interface TraktTrendMovie {
   movie: {
     ids: {
       trakt: number;
@@ -13,9 +13,3 @@ interface TraktMovie {
   type: string;
   score: number;
 }
-
-interface TmdbMovie {
-  poster_path: string;
-}
-
-export { TraktMovie, TmdbMovie };

@@ -1,4 +1,4 @@
-interface TraktMovie {
+export interface TraktDetailMovie {
   ids: {
     trakt: number;
     slug: string;
@@ -9,9 +9,3 @@ interface TraktMovie {
   year: number;
   poster?: string;
 }
-
-interface TmdbMovie {
-  poster_path: string;
-}
-
-export { TraktMovie, TmdbMovie };

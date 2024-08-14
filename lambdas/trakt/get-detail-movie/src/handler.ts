@@ -1,48 +1,27 @@
 import axios from "axios";
-import querystring from "querystring";
 import {
   SecretsManagerClient,
   GetSecretValueCommand,
 } from "@aws-sdk/client-secrets-manager";
 import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { TraktMovie, TmdbMovie } from "./types";
 import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
+import { getTraktDetailMoviePoster } from "../../../../lambda-shared/src/getTraktSearchMoviePoster";
+import { TraktDetailMovie } from "../../../../lambda-shared/src/types/TraktDetailMovie";
 
 const client = new SecretsManagerClient({ region: process.env.REGION });
-
-const getMoviePoster = async (movie: TraktMovie, tmdbApiKey: string) => {
-  const tmdbId = movie.ids.tmdb;
-
-  if (tmdbId) {
-    try {
-      const response = await axios.get<TmdbMovie>(
-        `${process.env.TMDB_API_URL}/movie/${tmdbId}?${querystring.stringify({
-          api_key: tmdbApiKey,
-        })}`
-      );
-
-      movie.poster = response.data?.poster_path
-        ? `${process.env.TMDB_IMAGE_URL}/w200${response.data?.poster_path}`
-        : "";
-    } catch (error) {
-      console.log({ error });
-      movie.poster = "";
-    }
-  }
-
-  return movie;
-};
 
 const getMovieDetail = async (
   itemId: number,
   traktApiKey: string,
   tmdbApiKey: string
 ) => {
+  const params = new URLSearchParams({
+    extended: "full",
+  });
+
   // query for movie
-  let response = await axios.get<TraktMovie | undefined>(
-    `${process.env.TRAKT_API_URL}/movies/${itemId}?${querystring.stringify({
-      extended: "full",
-    })}`,
+  let response = await axios.get<TraktDetailMovie | undefined>(
+    `${process.env.TRAKT_API_URL}/movies/${itemId}?${params.toString()}`,
     {
       headers: {
         "Content-Type": "application/json",
@@ -54,7 +33,13 @@ const getMovieDetail = async (
 
   // query for movie poster
   let movie = response.data;
-  if (movie) movie = await getMoviePoster(movie, tmdbApiKey);
+  if (movie)
+    movie = await getTraktDetailMoviePoster({
+      movie,
+      tmdbApiKey,
+      tmdbApiUrl: process.env.TMDB_API_URL!,
+      tmdbImageUrl: process.env.TMDB_IMAGE_URL!,
+    });
   return movie;
 };
 
@@ -63,7 +48,7 @@ const getMovieDetails = async (
   traktApiKey: string,
   tmdbApiKey: string
 ) => {
-  const response: { itemId: number; data: TraktMovie }[] = [];
+  const response: { itemId: number; data: TraktDetailMovie }[] = [];
 
   await Promise.all(
     itemIds.map(async (itemId) => {

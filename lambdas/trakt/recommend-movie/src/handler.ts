@@ -8,13 +8,14 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import axios from "axios";
-import querystring from "querystring";
-import { TmdbMovie, TraktMovie } from "./types";
+
 import {
   GetSecretValueCommand,
   SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
 import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
+import { getTraktDetailMoviePoster } from "../../../../lambda-shared/src/getTraktSearchMoviePoster";
+import { TraktDetailMovie } from "../../../../lambda-shared/src/types/TraktDetailMovie";
 
 // Create a DynamoDB client
 const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
@@ -24,28 +25,6 @@ const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
 // Create a Secret Manager client
 const smClient = new SecretsManagerClient({ region: process.env.REGION! });
-
-const getMoviePoster = async (movie: TraktMovie, tmdbApiKey: string) => {
-  const tmdbId = movie.ids.tmdb;
-
-  if (tmdbId) {
-    try {
-      const response = await axios.get<TmdbMovie>(
-        `${process.env.TMDB_API_URL}/movie/${tmdbId}?${querystring.stringify({
-          api_key: tmdbApiKey,
-        })}`
-      );
-
-      movie.poster = response.data?.poster_path
-        ? `${process.env.TMDB_IMAGE_URL}/w200${response.data?.poster_path}`
-        : "";
-    } catch (error) {
-      console.log({ error });
-      movie.poster = "";
-    }
-  }
-  return movie;
-};
 
 const getUserFavoriteMovies = async ({
   userId,
@@ -85,13 +64,15 @@ const getSecretString = async (secretName: string) => {
 };
 
 const getRecommendMovies = async (itemId: string, traktApiKey: string) => {
-  const response = await axios.get<TraktMovie[]>(
+  const params = new URLSearchParams({
+    extended: "full",
+    limit: "15",
+  });
+
+  const response = await axios.get<TraktDetailMovie[]>(
     `${
       process.env.TRAKT_API_URL
-    }/movies/${itemId}/related?${querystring.stringify({
-      extended: "full",
-      limit: 15,
-    })}`,
+    }/movies/${itemId}/related?${params.toString()}`,
     {
       headers: {
         "Content-Type": "application/json",
@@ -110,12 +91,12 @@ const excludeRegisteredMovies = async ({
   recommendSourceId,
   tableName,
 }: {
-  movies: TraktMovie[];
+  movies: TraktDetailMovie[];
   userId: string;
   recommendSourceId: string;
   tableName: string;
 }) => {
-  const moviesNotInRegisteredList: TraktMovie[] = [];
+  const moviesNotInRegisteredList: TraktDetailMovie[] = [];
 
   await Promise.all(
     movies.map(async (movie) => {
@@ -215,7 +196,12 @@ export const handler = async (
     // add movie poster
     moviesNotInRegisteredList = await Promise.all(
       moviesNotInRegisteredList.map(async (movie) => {
-        return await getMoviePoster(movie, tmdbApiKey);
+        return await getTraktDetailMoviePoster({
+          movie,
+          tmdbApiKey,
+          tmdbApiUrl: process.env.TMDB_API_URL!,
+          tmdbImageUrl: process.env.TMDB_IMAGE_URL!,
+        });
       })
     );
 

@@ -1,39 +1,16 @@
 import axios from "axios";
-import querystring from "querystring";
 import {
   SecretsManagerClient,
   GetSecretValueCommand,
 } from "@aws-sdk/client-secrets-manager";
 import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { TraktMovie, TmdbMovie } from "./types";
 import pick from "lodash/pick";
 import omitBy from "lodash/omitBy";
 import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
+import { getTraktTrendMoviePoster } from "../../../../lambda-shared/src/getTraktTrendMoviePoster";
+import { TraktTrendMovie } from "../../../../lambda-shared/src/types/TraktTrendMovie";
 
 const client = new SecretsManagerClient({ region: process.env.REGION });
-
-const getMoviePoster = async (movie: TraktMovie, tmdbApiKey: string) => {
-  const tmdbId = movie.movie.ids.tmdb;
-
-  if (tmdbId) {
-    try {
-      const response = await axios.get<TmdbMovie>(
-        `${process.env.TMDB_API_URL}/movie/${tmdbId}?${querystring.stringify({
-          api_key: tmdbApiKey,
-        })}`
-      );
-
-      movie.movie.poster = response.data?.poster_path
-        ? `${process.env.TMDB_IMAGE_URL}/w200${response.data?.poster_path}`
-        : "";
-    } catch (error) {
-      console.log({ error });
-      movie.movie.poster = "";
-    }
-  }
-
-  return movie;
-};
 
 const getSecretString = async (secretName: string) => {
   const command = new GetSecretValueCommand({ SecretId: secretName });
@@ -67,21 +44,19 @@ const getApiKeys = async () => {
 export const handler = async (
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResult> => {
-  const query = event.queryStringParameters?.["query"] || "";
-  const page = event.queryStringParameters?.["page"] || 1;
-  const limit = event.queryStringParameters?.["limit"] || 10;
+  const params = new URLSearchParams({
+    query: event.queryStringParameters?.["query"] || "",
+    page: event.queryStringParameters?.["page"] || "1",
+    limit: event.queryStringParameters?.["limit"] || "10",
+    extended: "full",
+  });
 
   try {
     const { tmdbApiKey, traktApiKey } = await getApiKeys();
 
     // query for movies
-    const response = await axios.get<TraktMovie[]>(
-      `${process.env.TRAKT_API_URL}/search/movie?${querystring.stringify({
-        query,
-        page,
-        limit,
-        extended: "full",
-      })}`,
+    const response = await axios.get<TraktTrendMovie[]>(
+      `${process.env.TRAKT_API_URL}/search/movie?${params.toString()}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -106,7 +81,12 @@ export const handler = async (
     if (response.data.length) {
       response.data = await Promise.all(
         response.data.map(async (movie) => {
-          return await getMoviePoster(movie, tmdbApiKey);
+          return await getTraktTrendMoviePoster({
+            movie,
+            tmdbApiKey,
+            tmdbApiUrl: process.env.TMDB_API_URL!,
+            tmdbImageUrl: process.env.TMDB_IMAGE_URL!,
+          });
         })
       );
     }
