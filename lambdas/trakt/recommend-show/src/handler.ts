@@ -1,23 +1,16 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import {
-  DynamoDBDocumentClient,
-  PutCommand,
-  PutCommandInput,
-  QueryCommand,
-  QueryCommandInput,
-} from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import axios from "axios";
-import querystring from "querystring";
-import {
-  GetSecretValueCommand,
-  SecretsManagerClient,
-} from "@aws-sdk/client-secrets-manager";
+
+import { SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
 import { getTraktDetailShowPoster } from "../../../../lambda-shared/src/getTraktDetailShowPoster";
 import { TraktDetailShow } from "../../../../lambda-shared/src/types/TraktDetailShow";
 import { getUserFavoriteItems } from "../../../../lambda-shared/src/getUserFavoriteItems";
 import { getRandomItem } from "../../../../lambda-shared/src/getRandomItem";
+import { getTraktApiKeys } from "../../../../lambda-shared/src/getTraktApiKeys";
+import { isItemRegistered } from "../../../../lambda-shared/src/isItemRegistered";
 
 // Create a DynamoDB client
 const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
@@ -27,12 +20,6 @@ const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
 // Create a Secret Manager client
 const smClient = new SecretsManagerClient({ region: process.env.REGION! });
-
-const getSecretString = async (secretName: string) => {
-  const command = new GetSecretValueCommand({ SecretId: secretName });
-  const data = await smClient.send(command);
-  return data.SecretString || "";
-};
 
 const getRecommendShows = async (itemId: string, traktApiKey: string) => {
   const params = new URLSearchParams({
@@ -70,18 +57,15 @@ const excludeRegisteredShows = async ({
     shows.map(async (show) => {
       const itemId = show.ids.trakt;
 
-      const queryInput: QueryCommandInput = {
-        TableName: tableName,
-        IndexName: "userId_recommendSourceId_itemId",
-        KeyConditionExpression: "userId_recommendSourceId_itemId = :key",
-        ExpressionAttributeValues: {
-          ":key": `${userId}_${recommendSourceId}_${itemId}`,
-        },
-      };
-      const queryCommand = new QueryCommand(queryInput);
-      const queryOutput = await docClient.send(queryCommand);
+      const isShowRegistered = await isItemRegistered({
+        itemId,
+        userId,
+        recommendSourceId,
+        tableName,
+        docClient,
+      });
 
-      if (queryOutput.Count === 0 || !queryOutput.Count) {
+      if (!isShowRegistered) {
         showsNotInRegisteredList.push(show);
       }
     })
@@ -115,11 +99,12 @@ export const handler = async (
     const traktSecretName = process.env.TRAKT_SECRET_NAME!;
     const tmdbSecretName = process.env.TMDB_SECRET_NAME!;
 
-    const [traktApiKey, tmdbApiKey] = await Promise.all([
-      // get external service api keys
-      getSecretString(traktSecretName),
-      getSecretString(tmdbSecretName),
-    ]);
+    // get API keys
+    const { traktApiKey, tmdbApiKey } = await getTraktApiKeys({
+      tmdbSecretName,
+      traktSecretName,
+      client: smClient,
+    });
 
     // get user favorite shows
     const userFavoriteShows = await getUserFavoriteItems({

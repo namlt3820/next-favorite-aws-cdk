@@ -1,15 +1,12 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import {
-  DynamoDBDocumentClient,
-  QueryCommand,
-  QueryCommandInput,
-} from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import axios from "axios";
 import { JikanAnime } from "./types";
 import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
 import { getUserFavoriteItems } from "../../../../lambda-shared/src/getUserFavoriteItems";
 import { getRandomItem } from "../../../../lambda-shared/src/getRandomItem";
+import { isItemRegistered } from "../../../../lambda-shared/src/isItemRegistered";
 
 // Create a DynamoDB client
 const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
@@ -42,18 +39,15 @@ const excludeRegisteredAnime = async ({
     anime.map(async (item) => {
       const itemId = item.entry.mal_id;
 
-      const queryInput: QueryCommandInput = {
-        TableName: tableName,
-        IndexName: "userId_recommendSourceId_itemId",
-        KeyConditionExpression: "userId_recommendSourceId_itemId = :key",
-        ExpressionAttributeValues: {
-          ":key": `${userId}_${recommendSourceId}_${itemId}`,
-        },
-      };
-      const queryCommand = new QueryCommand(queryInput);
-      const queryOutput = await docClient.send(queryCommand);
+      const isAnimeRegistered = await isItemRegistered({
+        itemId,
+        userId,
+        recommendSourceId,
+        tableName,
+        docClient,
+      });
 
-      if (queryOutput.Count === 0 || !queryOutput.Count) {
+      if (!isAnimeRegistered) {
         animeNotInRegisteredList.push(item);
       }
     })
