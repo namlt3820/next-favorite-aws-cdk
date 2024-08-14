@@ -1,45 +1,15 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import {
-  DynamoDBDocumentClient,
-  PutCommand,
-  PutCommandInput,
-  QueryCommand,
-  QueryCommandInput,
-} from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { v4 as uuidv4 } from "uuid";
 import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
+import { isItemRegistered } from "../../../../lambda-shared/src/isItemRegistered";
+import { createCollectionItem } from "../../../../lambda-shared/src/createCollectionItem";
 
 // Create a DynamoDB client
 const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
 
 // Create a DynamoDB DocumentClient
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
-
-const checkIfItemExists = async ({
-  userId,
-  recommendSourceId,
-  itemId,
-  tableName,
-}: {
-  userId: string;
-  recommendSourceId: string;
-  itemId: string;
-  tableName: string;
-}) => {
-  const queryInput: QueryCommandInput = {
-    TableName: tableName,
-    IndexName: "userId_recommendSourceId_itemId",
-    KeyConditionExpression: "userId_recommendSourceId_itemId = :key",
-    ExpressionAttributeValues: {
-      ":key": `${userId}_${recommendSourceId}_${itemId}`,
-    },
-  };
-  const queryCommand = new QueryCommand(queryInput);
-  const queryOutput = await docClient.send(queryCommand);
-
-  return queryOutput.Count && queryOutput.Count > 0;
-};
 
 export const handler = async (
   event: APIGatewayEvent
@@ -61,7 +31,13 @@ export const handler = async (
   const tableName = process.env.TABLE_NAME!;
 
   if (
-    await checkIfItemExists({ userId, recommendSourceId, itemId, tableName })
+    await isItemRegistered({
+      userId,
+      recommendSourceId,
+      itemId,
+      tableName,
+      docClient,
+    })
   ) {
     return withCorsHeaders(event, {
       statusCode: 200,
@@ -71,25 +47,13 @@ export const handler = async (
     });
   }
 
-  const id = uuidv4();
-  const createdAt = Math.floor(Date.now() / 1000);
-
-  const putInput: PutCommandInput = {
-    TableName: process.env.TABLE_NAME!,
-    Item: {
+  try {
+    await createCollectionItem({
       userId,
       recommendSourceId,
       itemId,
-      id,
-      userId_recommendSourceId_itemId: `${userId}_${recommendSourceId}_${itemId}`,
-      userId_recommendSourceId: `${userId}_${recommendSourceId}`,
-      createdAt,
-    },
-  };
-  const command = new PutCommand(putInput);
-
-  try {
-    await docClient.send(command);
+      docClient,
+    });
     return withCorsHeaders(event, {
       statusCode: 200,
       body: JSON.stringify({
