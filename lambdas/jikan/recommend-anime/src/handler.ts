@@ -8,35 +8,13 @@ import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import axios from "axios";
 import { JikanAnime } from "./types";
 import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
+import { getUserFavoriteItems } from "../../../../lambda-shared/src/getUserFavoriteItems";
 
 // Create a DynamoDB client
 const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
 
 // Create a DynamoDB DocumentClient
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
-
-const getUserFavoriteAnime = async ({
-  userId,
-  recommendSourceId,
-  tableName,
-}: {
-  userId: string;
-  recommendSourceId: string;
-  tableName: string;
-}) => {
-  const queryInput: QueryCommandInput = {
-    TableName: tableName,
-    IndexName: "userId_recommendSourceId",
-    KeyConditionExpression: "userId_recommendSourceId = :key",
-    ExpressionAttributeValues: {
-      ":key": `${userId}_${recommendSourceId}`,
-    },
-  };
-  const queryCommand = new QueryCommand(queryInput);
-  const queryOutput = await docClient.send(queryCommand);
-
-  return queryOutput.Items;
-};
 
 const getRandomAnime = (array: any[]) => {
   if (array.length === 0) {
@@ -115,10 +93,11 @@ export const handler = async (
     const ignoreTableName = process.env.IGNORE_TABLE_NAME!;
 
     // get user favorite movies
-    const userFavoriteAnime = await getUserFavoriteAnime({
+    const userFavoriteAnime = await getUserFavoriteItems({
       userId,
       recommendSourceId,
       tableName: favoriteTableName,
+      docClient,
     });
 
     if (!userFavoriteAnime?.length) {

@@ -16,6 +16,7 @@ import {
 import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
 import { getTraktDetailMoviePoster } from "../../../../lambda-shared/src/getTraktDetailMoviePoster";
 import { TraktDetailMovie } from "../../../../lambda-shared/src/types/TraktDetailMovie";
+import { getUserFavoriteItems } from "../../../../lambda-shared/src/getUserFavoriteItems";
 
 // Create a DynamoDB client
 const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
@@ -25,29 +26,6 @@ const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
 // Create a Secret Manager client
 const smClient = new SecretsManagerClient({ region: process.env.REGION! });
-
-const getUserFavoriteMovies = async ({
-  userId,
-  recommendSourceId,
-  tableName,
-}: {
-  userId: string;
-  recommendSourceId: string;
-  tableName: string;
-}) => {
-  const queryInput: QueryCommandInput = {
-    TableName: tableName,
-    IndexName: "userId_recommendSourceId",
-    KeyConditionExpression: "userId_recommendSourceId = :key",
-    ExpressionAttributeValues: {
-      ":key": `${userId}_${recommendSourceId}`,
-    },
-  };
-  const queryCommand = new QueryCommand(queryInput);
-  const queryOutput = await docClient.send(queryCommand);
-
-  return queryOutput.Items;
-};
 
 const getRandomMovie = (array: any[]) => {
   if (array.length === 0) {
@@ -154,10 +132,11 @@ export const handler = async (
     ]);
 
     // get user favorite movies
-    const userFavoriteMovies = await getUserFavoriteMovies({
+    const userFavoriteMovies = await getUserFavoriteItems({
       userId,
       recommendSourceId,
       tableName: favoriteTableName,
+      docClient,
     });
 
     if (!userFavoriteMovies?.length) {
