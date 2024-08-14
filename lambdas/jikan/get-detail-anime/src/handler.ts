@@ -1,5 +1,6 @@
 import axios from "axios";
 import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
+import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
 
 const getAnimeDetail = async (itemId: number) => {
   let response = await axios.get(
@@ -7,30 +8,6 @@ const getAnimeDetail = async (itemId: number) => {
   );
 
   return response.data?.data;
-};
-
-const withCorsHeaders = (
-  event: APIGatewayEvent,
-  response: { statusCode: number; body: string }
-): APIGatewayProxyResult => {
-  const allowedOrigins = [
-    "http://localhost:3000",
-    "https://nextfavorite.gladiolus.info",
-  ];
-  const requestOrigin = event.headers.origin || "";
-
-  const isOriginAllowed = allowedOrigins.includes(requestOrigin);
-  return isOriginAllowed
-    ? {
-        ...response,
-        headers: {
-          "Access-Control-Allow-Headers": "Content-Type",
-          "Access-Control-Allow-Origin": requestOrigin,
-          "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
-          "Access-Control-Allow-Credentials": "true",
-        },
-      }
-    : response;
 };
 
 const getAnimeDetails = async (itemIds: number[]) => {

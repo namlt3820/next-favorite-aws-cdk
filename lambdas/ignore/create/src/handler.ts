@@ -8,36 +8,13 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import { v4 as uuidv4 } from "uuid";
+import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
 
 // Create a DynamoDB client
 const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
 
 // Create a DynamoDB DocumentClient
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
-
-const withCorsHeaders = (
-  event: APIGatewayEvent,
-  response: { statusCode: number; body: string }
-): APIGatewayProxyResult => {
-  const allowedOrigins = [
-    "http://localhost:3000",
-    "https://nextfavorite.gladiolus.info",
-  ];
-  const requestOrigin = event.headers.origin || "";
-
-  const isOriginAllowed = allowedOrigins.includes(requestOrigin);
-  return isOriginAllowed
-    ? {
-        ...response,
-        headers: {
-          "Access-Control-Allow-Headers": "Content-Type",
-          "Access-Control-Allow-Origin": requestOrigin,
-          "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
-          "Access-Control-Allow-Credentials": "true",
-        },
-      }
-    : response;
-};
 
 const checkIfItemExists = async ({
   userId,

@@ -14,6 +14,7 @@ import {
   GetSecretValueCommand,
   SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
+import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
 
 // Create a DynamoDB client
 const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
@@ -23,30 +24,6 @@ const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
 // Create a Secret Manager client
 const smClient = new SecretsManagerClient({ region: process.env.REGION! });
-
-const withCorsHeaders = (
-  event: APIGatewayEvent,
-  response: { statusCode: number; body: string }
-): APIGatewayProxyResult => {
-  const allowedOrigins = [
-    "http://localhost:3000",
-    "https://nextfavorite.gladiolus.info",
-  ];
-  const requestOrigin = event.headers.origin || "";
-
-  const isOriginAllowed = allowedOrigins.includes(requestOrigin);
-  return isOriginAllowed
-    ? {
-        ...response,
-        headers: {
-          "Access-Control-Allow-Headers": "Content-Type",
-          "Access-Control-Allow-Origin": requestOrigin,
-          "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
-          "Access-Control-Allow-Credentials": "true",
-        },
-      }
-    : response;
-};
 
 const getShowPoster = async (show: TraktShow, tmdbApiKey: string) => {
   const tmdbId = show.ids.tmdb;
