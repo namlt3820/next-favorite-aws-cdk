@@ -5,35 +5,13 @@ import {
   GetSecretValueCommand,
 } from "@aws-sdk/client-secrets-manager";
 import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { TraktShow, TmdbTv } from "./types";
 import pick from "lodash/pick";
 import omitBy from "lodash/omitBy";
 import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
+import { getTraktTrendShowPoster } from "../../../../lambda-shared/src/getTraktTrendShowPoster";
+import { TraktTrendShow } from "../../../../lambda-shared/src/types/TraktTrendShow";
 
 const client = new SecretsManagerClient({ region: process.env.REGION });
-
-const getShowPoster = async (show: TraktShow, tmdbApiKey: string) => {
-  const tmdbId = show.show.ids.tmdb;
-
-  if (tmdbId) {
-    try {
-      const response = await axios.get<TmdbTv>(
-        `${process.env.TMDB_API_URL}/tv/${tmdbId}?${querystring.stringify({
-          api_key: tmdbApiKey,
-        })}`
-      );
-
-      show.show.poster = response.data?.poster_path
-        ? `${process.env.TMDB_IMAGE_URL}/w200${response.data?.poster_path}`
-        : "";
-    } catch (error) {
-      console.log({ error });
-      show.show.poster = "";
-    }
-  }
-
-  return show;
-};
 
 const getApiKeys = async () => {
   const traktSecretName = process.env.TRAKT_SECRET_NAME;
@@ -67,19 +45,18 @@ const getSecretString = async (secretName: string) => {
 export const handler = async (
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResult> => {
-  const page = event.queryStringParameters?.["page"] || 1;
-  const limit = event.queryStringParameters?.["limit"] || 10;
+  const params = new URLSearchParams({
+    page: event.queryStringParameters?.["page"] || "1",
+    limit: event.queryStringParameters?.["limit"] || "10",
+    extended: "full",
+  });
 
   try {
     const { tmdbApiKey, traktApiKey } = await getApiKeys();
 
     // query for shows
-    const response = await axios.get<TraktShow[]>(
-      `${process.env.TRAKT_API_URL}/shows/trending?${querystring.stringify({
-        page,
-        limit,
-        extended: "full",
-      })}`,
+    const response = await axios.get<TraktTrendShow[]>(
+      `${process.env.TRAKT_API_URL}/shows/trending?${params.toString()}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -104,7 +81,12 @@ export const handler = async (
     if (response.data.length) {
       response.data = await Promise.all(
         response.data.map(async (show) => {
-          return await getShowPoster(show, tmdbApiKey);
+          return await getTraktTrendShowPoster({
+            show,
+            tmdbApiKey,
+            tmdbApiUrl: process.env.TMDB_API_URL!,
+            tmdbImageUrl: process.env.TMDB_IMAGE_URL!,
+          });
         })
       );
     }

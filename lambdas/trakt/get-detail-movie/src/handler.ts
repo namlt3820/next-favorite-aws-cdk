@@ -5,7 +5,7 @@ import {
 } from "@aws-sdk/client-secrets-manager";
 import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
-import { getTraktDetailMoviePoster } from "../../../../lambda-shared/src/getTraktSearchMoviePoster";
+import { getTraktDetailMoviePoster } from "../../../../lambda-shared/src/getTraktDetailMoviePoster";
 import { TraktDetailMovie } from "../../../../lambda-shared/src/types/TraktDetailMovie";
 
 const client = new SecretsManagerClient({ region: process.env.REGION });

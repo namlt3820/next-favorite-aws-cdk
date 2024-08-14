@@ -1,4 +1,4 @@
-interface TraktShow {
+export interface TraktTrendShow {
   show: {
     ids: {
       trakt: number;
@@ -13,9 +13,3 @@ interface TraktShow {
   type: string;
   score: number;
 }
-
-interface TmdbTv {
-  poster_path: string;
-}
-
-export { TraktShow, TmdbTv };

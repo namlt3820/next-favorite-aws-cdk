@@ -9,12 +9,13 @@ import {
 import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import axios from "axios";
 import querystring from "querystring";
-import { TraktShow, TmdbTv } from "./types";
 import {
   GetSecretValueCommand,
   SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
 import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
+import { getTraktDetailShowPoster } from "../../../../lambda-shared/src/getTraktDetailShowPoster";
+import { TraktDetailShow } from "../../../../lambda-shared/src/types/TraktDetailShow";
 
 // Create a DynamoDB client
 const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
@@ -24,28 +25,6 @@ const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
 // Create a Secret Manager client
 const smClient = new SecretsManagerClient({ region: process.env.REGION! });
-
-const getShowPoster = async (show: TraktShow, tmdbApiKey: string) => {
-  const tmdbId = show.ids.tmdb;
-
-  if (tmdbId) {
-    try {
-      const response = await axios.get<TmdbTv>(
-        `${process.env.TMDB_API_URL}/tv/${tmdbId}?${querystring.stringify({
-          api_key: tmdbApiKey,
-        })}`
-      );
-
-      show.poster = response.data?.poster_path
-        ? `${process.env.TMDB_IMAGE_URL}/w200${response.data?.poster_path}`
-        : "";
-    } catch (error) {
-      console.log({ error });
-      show.poster = "";
-    }
-  }
-  return show;
-};
 
 const getUserFavoriteShows = async ({
   userId,
@@ -85,12 +64,12 @@ const getSecretString = async (secretName: string) => {
 };
 
 const getRecommendShows = async (itemId: string, traktApiKey: string) => {
-  const response = await axios.get<TraktShow[]>(
-    `${
-      process.env.TRAKT_API_URL
-    }/shows/${itemId}/related?${querystring.stringify({
-      extended: "full",
-    })}`,
+  const params = new URLSearchParams({
+    extended: "full",
+  });
+
+  const response = await axios.get<TraktDetailShow[]>(
+    `${process.env.TRAKT_API_URL}/shows/${itemId}/related?${params.toString()}`,
     {
       headers: {
         "Content-Type": "application/json",
@@ -109,12 +88,12 @@ const excludeRegisteredShows = async ({
   recommendSourceId,
   tableName,
 }: {
-  shows: TraktShow[];
+  shows: TraktDetailShow[];
   userId: string;
   recommendSourceId: string;
   tableName: string;
 }) => {
-  const showsNotInRegisteredList: TraktShow[] = [];
+  const showsNotInRegisteredList: TraktDetailShow[] = [];
 
   await Promise.all(
     shows.map(async (show) => {
@@ -214,7 +193,12 @@ export const handler = async (
     // add show poster
     showsNotInRegisteredList = await Promise.all(
       showsNotInRegisteredList.map(async (show) => {
-        return await getShowPoster(show, tmdbApiKey);
+        return await getTraktDetailShowPoster({
+          show,
+          tmdbApiKey,
+          tmdbApiUrl: process.env.TMDB_API_URL!,
+          tmdbImageUrl: process.env.TMDB_IMAGE_URL!,
+        });
       })
     );
 

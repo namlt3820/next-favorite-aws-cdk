@@ -1,4 +1,4 @@
-interface TraktShow {
+export interface TraktDetailShow {
   ids: {
     trakt: number;
     slug: string;
@@ -9,9 +9,3 @@ interface TraktShow {
   year: number;
   poster?: string;
 }
-
-interface TmdbTv {
-  poster_path: string;
-}
-
-export { TraktShow, TmdbTv };

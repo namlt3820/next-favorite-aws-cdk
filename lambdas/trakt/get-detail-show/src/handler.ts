@@ -5,33 +5,11 @@ import {
   GetSecretValueCommand,
 } from "@aws-sdk/client-secrets-manager";
 import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import { TraktShow, TmdbTv } from "./types";
+import { TraktDetailShow } from "../../../../lambda-shared/src/types/TraktDetailShow";
+import { getTraktDetailShowPoster } from "../../../../lambda-shared/src/getTraktDetailShowPoster";
 import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
 
 const client = new SecretsManagerClient({ region: process.env.REGION });
-
-const getShowPoster = async (show: TraktShow, tmdbApiKey: string) => {
-  const tmdbId = show.ids.tmdb;
-
-  if (tmdbId) {
-    try {
-      const response = await axios.get<TmdbTv>(
-        `${process.env.TMDB_API_URL}/tv/${tmdbId}?${querystring.stringify({
-          api_key: tmdbApiKey,
-        })}`
-      );
-
-      show.poster = response.data?.poster_path
-        ? `${process.env.TMDB_IMAGE_URL}/w200${response.data?.poster_path}`
-        : "";
-    } catch (error) {
-      console.log({ error });
-      show.poster = "";
-    }
-  }
-
-  return show;
-};
 
 const getShowDetail = async (
   itemId: number,
@@ -39,7 +17,7 @@ const getShowDetail = async (
   tmdbApiKey: string
 ) => {
   // query for show
-  let response = await axios.get<TraktShow | undefined>(
+  let response = await axios.get<TraktDetailShow | undefined>(
     `${process.env.TRAKT_API_URL}/shows/${itemId}?${querystring.stringify({
       extended: "full",
     })}`,
@@ -54,7 +32,13 @@ const getShowDetail = async (
 
   // query for show poster
   let show = response.data;
-  if (show) show = await getShowPoster(show, tmdbApiKey);
+  if (show)
+    show = await getTraktDetailShowPoster({
+      show,
+      tmdbApiKey,
+      tmdbApiUrl: process.env.TMDB_API_URL!,
+      tmdbImageUrl: process.env.TMDB_IMAGE_URL!,
+    });
   return show;
 };
 
@@ -63,7 +47,7 @@ const getShowDetails = async (
   traktApiKey: string,
   tmdbApiKey: string
 ) => {
-  const response: { itemId: number; data: TraktShow }[] = [];
+  const response: { itemId: number; data: TraktDetailShow }[] = [];
 
   await Promise.all(
     itemIds.map(async (itemId) => {

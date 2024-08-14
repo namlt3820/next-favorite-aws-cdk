@@ -14,7 +14,7 @@ import {
   SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
 import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
-import { getTraktDetailMoviePoster } from "../../../../lambda-shared/src/getTraktSearchMoviePoster";
+import { getTraktDetailMoviePoster } from "../../../../lambda-shared/src/getTraktDetailMoviePoster";
 import { TraktDetailMovie } from "../../../../lambda-shared/src/types/TraktDetailMovie";
 
 // Create a DynamoDB client
