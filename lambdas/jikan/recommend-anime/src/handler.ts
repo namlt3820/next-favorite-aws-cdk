@@ -9,20 +9,13 @@ import axios from "axios";
 import { JikanAnime } from "./types";
 import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
 import { getUserFavoriteItems } from "../../../../lambda-shared/src/getUserFavoriteItems";
+import { getRandomItem } from "../../../../lambda-shared/src/getRandomItem";
 
 // Create a DynamoDB client
 const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
 
 // Create a DynamoDB DocumentClient
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
-
-const getRandomAnime = (array: any[]) => {
-  if (array.length === 0) {
-    return undefined; // Handle the case where the array is empty
-  }
-  const randomIndex = Math.floor(Math.random() * array.length);
-  return array[randomIndex];
-};
 
 const getRecommendAnime = async (itemId: string): Promise<JikanAnime[]> => {
   const response = await axios.get(
@@ -110,7 +103,7 @@ export const handler = async (
     }
 
     // get a random anime from user favorite list
-    const randomAnime = getRandomAnime(userFavoriteAnime);
+    const randomAnime = getRandomItem(userFavoriteAnime);
 
     // get recommend anime for this random anime
     const recommendAnime = await getRecommendAnime(randomAnime.itemId);

@@ -17,6 +17,7 @@ import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
 import { getTraktDetailShowPoster } from "../../../../lambda-shared/src/getTraktDetailShowPoster";
 import { TraktDetailShow } from "../../../../lambda-shared/src/types/TraktDetailShow";
 import { getUserFavoriteItems } from "../../../../lambda-shared/src/getUserFavoriteItems";
+import { getRandomItem } from "../../../../lambda-shared/src/getRandomItem";
 
 // Create a DynamoDB client
 const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
@@ -26,14 +27,6 @@ const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
 // Create a Secret Manager client
 const smClient = new SecretsManagerClient({ region: process.env.REGION! });
-
-const getRandomFavoriteShow = (array: any[]) => {
-  if (array.length === 0) {
-    return undefined; // Handle the case where the array is empty
-  }
-  const randomIndex = Math.floor(Math.random() * array.length);
-  return array[randomIndex];
-};
 
 const getSecretString = async (secretName: string) => {
   const command = new GetSecretValueCommand({ SecretId: secretName });
@@ -146,7 +139,7 @@ export const handler = async (
     }
 
     // get a random show from user favorite list
-    const randomShow = getRandomFavoriteShow(userFavoriteShows);
+    const randomShow = getRandomItem(userFavoriteShows);
 
     // get recommend shows for this random show
     const recommendShows = await getRecommendShows(

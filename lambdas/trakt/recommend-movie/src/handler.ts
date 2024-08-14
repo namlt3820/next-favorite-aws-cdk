@@ -17,6 +17,7 @@ import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
 import { getTraktDetailMoviePoster } from "../../../../lambda-shared/src/getTraktDetailMoviePoster";
 import { TraktDetailMovie } from "../../../../lambda-shared/src/types/TraktDetailMovie";
 import { getUserFavoriteItems } from "../../../../lambda-shared/src/getUserFavoriteItems";
+import { getRandomItem } from "../../../../lambda-shared/src/getRandomItem";
 
 // Create a DynamoDB client
 const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
@@ -26,14 +27,6 @@ const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
 // Create a Secret Manager client
 const smClient = new SecretsManagerClient({ region: process.env.REGION! });
-
-const getRandomMovie = (array: any[]) => {
-  if (array.length === 0) {
-    return undefined; // Handle the case where the array is empty
-  }
-  const randomIndex = Math.floor(Math.random() * array.length);
-  return array[randomIndex];
-};
 
 const getSecretString = async (secretName: string) => {
   const command = new GetSecretValueCommand({ SecretId: secretName });
@@ -149,7 +142,7 @@ export const handler = async (
     }
 
     // get a random movie from user favorite list
-    const randomMovie = getRandomMovie(userFavoriteMovies);
+    const randomMovie = getRandomItem(userFavoriteMovies);
 
     // get recommend movies for this random movie
     const recommendMovies = await getRecommendMovies(
