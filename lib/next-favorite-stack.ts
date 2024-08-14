@@ -181,7 +181,11 @@ export class NextFavoriteStack extends cdk.Stack {
     const { traktGetTrendMovieFunction } = traktGetTrendMovieConstruct({
       scope: this,
       env,
+      favoriteTableName: favoriteTable.tableName,
+      ignoreTableName: ignoreTable.tableName,
     });
+    favoriteTable.grantReadData(traktGetTrendMovieFunction);
+    ignoreTable.grantReadData(traktGetTrendMovieFunction);
 
     // Assign read permission from trakt api secret to trakt get trend movie function
     traktApiKeySecret.grantRead(traktGetTrendMovieFunction);

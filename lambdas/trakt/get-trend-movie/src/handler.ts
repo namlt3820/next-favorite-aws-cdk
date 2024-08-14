@@ -1,3 +1,5 @@
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import axios from "axios";
 import { SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
@@ -7,12 +9,61 @@ import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
 import { getTraktTrendMoviePoster } from "../../../../lambda-shared/src/getTraktTrendMoviePoster";
 import { TraktTrendMovie } from "../../../../lambda-shared/src/types/TraktTrendMovie";
 import { getTraktApiKeys } from "../../../../lambda-shared/src/getTraktApiKeys";
+import { isItemRegistered } from "../../../../lambda-shared/src/isItemRegistered";
 
-const client = new SecretsManagerClient({ region: process.env.REGION });
+// Create a DynamoDB client
+const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
+
+// Create a DynamoDB DocumentClient
+const docClient = DynamoDBDocumentClient.from(dynamoClient);
+
+// Create a Secret Manager client
+const smClient = new SecretsManagerClient({ region: process.env.REGION });
+
+const excludeRegisteredMovies = async ({
+  movies,
+  userId,
+  recommendSourceId,
+  tableName,
+}: {
+  movies: TraktTrendMovie[];
+  userId: string;
+  recommendSourceId: string;
+  tableName: string;
+}) => {
+  const moviesNotInRegisteredList: TraktTrendMovie[] = [];
+
+  await Promise.all(
+    movies.map(async (movie) => {
+      const itemId = movie.movie.ids.trakt;
+
+      const isMovieRegistered = await isItemRegistered({
+        itemId,
+        userId,
+        recommendSourceId,
+        tableName,
+        docClient,
+      });
+
+      if (!isMovieRegistered) {
+        moviesNotInRegisteredList.push(movie);
+      }
+    })
+  );
+
+  return moviesNotInRegisteredList;
+};
 
 export const handler = async (
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResult> => {
+  // check if user exists
+  const recommendSourceId =
+    event.queryStringParameters?.recommendSourceId || "";
+  const userId = event.queryStringParameters?.userId || "";
+  const favoriteTableName = process.env.FAVORITE_TABLE_NAME!;
+  const ignoreTableName = process.env.IGNORE_TABLE_NAME!;
+
   const params = new URLSearchParams({
     page: event.queryStringParameters?.["page"] || "1",
     limit: event.queryStringParameters?.["limit"] || "10",
@@ -21,7 +72,7 @@ export const handler = async (
 
   try {
     const { tmdbApiKey, traktApiKey } = await getTraktApiKeys({
-      client,
+      client: smClient,
       tmdbSecretName: process.env.TMDB_SECRET_NAME!,
       traktSecretName: process.env.TRAKT_SECRET_NAME!,
     });
@@ -48,6 +99,23 @@ export const handler = async (
       ]),
       (value) => value === null
     );
+
+    if (response.data.length && userId) {
+      // filter ignored and favorite movies from this trending list
+      response.data = await excludeRegisteredMovies({
+        movies: response.data,
+        recommendSourceId,
+        tableName: ignoreTableName,
+        userId,
+      });
+
+      response.data = await excludeRegisteredMovies({
+        movies: response.data,
+        recommendSourceId,
+        tableName: favoriteTableName,
+        userId,
+      });
+    }
 
     // query for movie poster
     if (response.data.length) {
