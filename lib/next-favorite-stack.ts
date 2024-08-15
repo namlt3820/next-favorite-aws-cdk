@@ -157,7 +157,11 @@ export class NextFavoriteStack extends cdk.Stack {
     const { traktSearchMovieFunction } = traktSearchMovieConstruct({
       scope: this,
       env,
+      favoriteTableName: favoriteTable.tableName,
+      ignoreTableName: ignoreTable.tableName,
     });
+    favoriteTable.grantReadData(traktSearchMovieFunction);
+    ignoreTable.grantReadData(traktSearchMovieFunction);
 
     // Assign read permission from trakt api secret to trakt search movie function
     const traktApiSecretId = `NF-TraktApiKeySecret-${env}`;

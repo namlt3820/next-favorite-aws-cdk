@@ -9,7 +9,7 @@ import { withCorsHeaders } from "../../../../lambda-shared/src/withCorsHeaders";
 import { getTraktTrendMoviePoster } from "../../../../lambda-shared/src/getTraktTrendMoviePoster";
 import { TraktTrendMovie } from "../../../../lambda-shared/src/types/TraktTrendMovie";
 import { getTraktApiKeys } from "../../../../lambda-shared/src/getTraktApiKeys";
-import { isItemRegistered } from "../../../../lambda-shared/src/isItemRegistered";
+import { excludeRegisteredMovies } from "../../../../lambda-shared/src/excludeRegisteredMovies";
 
 // Create a DynamoDB client
 const dynamoClient = new DynamoDBClient({ region: process.env.REGION! });
@@ -20,47 +20,13 @@ const docClient = DynamoDBDocumentClient.from(dynamoClient);
 // Create a Secret Manager client
 const smClient = new SecretsManagerClient({ region: process.env.REGION });
 
-const excludeRegisteredMovies = async ({
-  movies,
-  userId,
-  recommendSourceId,
-  tableName,
-}: {
-  movies: TraktTrendMovie[];
-  userId: string;
-  recommendSourceId: string;
-  tableName: string;
-}) => {
-  const moviesNotInRegisteredList: TraktTrendMovie[] = [];
-
-  await Promise.all(
-    movies.map(async (movie) => {
-      const itemId = movie.movie.ids.trakt;
-
-      const isMovieRegistered = await isItemRegistered({
-        itemId,
-        userId,
-        recommendSourceId,
-        tableName,
-        docClient,
-      });
-
-      if (!isMovieRegistered) {
-        moviesNotInRegisteredList.push(movie);
-      }
-    })
-  );
-
-  return moviesNotInRegisteredList;
-};
-
 export const handler = async (
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResult> => {
-  // check if user exists
   const recommendSourceId =
     event.queryStringParameters?.recommendSourceId || "";
   const userId = event.queryStringParameters?.userId || "";
+
   const favoriteTableName = process.env.FAVORITE_TABLE_NAME!;
   const ignoreTableName = process.env.IGNORE_TABLE_NAME!;
 
@@ -105,15 +71,9 @@ export const handler = async (
       response.data = await excludeRegisteredMovies({
         movies: response.data,
         recommendSourceId,
-        tableName: ignoreTableName,
+        tableNames: [ignoreTableName, favoriteTableName],
         userId,
-      });
-
-      response.data = await excludeRegisteredMovies({
-        movies: response.data,
-        recommendSourceId,
-        tableName: favoriteTableName,
-        userId,
+        docClient,
       });
     }
 
