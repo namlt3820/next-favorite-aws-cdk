@@ -229,7 +229,11 @@ export class NextFavoriteStack extends cdk.Stack {
     const { traktSearchShowFunction } = traktSearchShowConstruct({
       scope: this,
       env,
+      favoriteTableName: favoriteTable.tableName,
+      ignoreTableName: ignoreTable.tableName,
     });
+    favoriteTable.grantReadData(traktSearchShowFunction);
+    ignoreTable.grantReadData(traktSearchShowFunction);
 
     // Assign read permission from trakt api secret to trakt search show function
     traktApiKeySecret.grantRead(traktSearchShowFunction);
@@ -241,7 +245,11 @@ export class NextFavoriteStack extends cdk.Stack {
     const { traktGetTrendShowFunction } = traktGetTrendShowConstruct({
       scope: this,
       env,
+      favoriteTableName: favoriteTable.tableName,
+      ignoreTableName: ignoreTable.tableName,
     });
+    favoriteTable.grantReadData(traktGetTrendShowFunction);
+    ignoreTable.grantReadData(traktGetTrendShowFunction);
 
     // Assign read permission from trakt api secret to trakt get trend show function
     traktApiKeySecret.grantRead(traktGetTrendShowFunction);
@@ -329,7 +337,11 @@ export class NextFavoriteStack extends cdk.Stack {
     const { jikanSearchAnimeFunction } = jikanSearchAnimeConstruct({
       scope: this,
       env,
+      favoriteTableName: favoriteTable.tableName,
+      ignoreTableName: ignoreTable.tableName,
     });
+    favoriteTable.grantReadData(jikanSearchAnimeFunction);
+    ignoreTable.grantReadData(jikanSearchAnimeFunction);
 
     // Jikan Recommend Anime Construct
     const { jikanRecommendAnimeFunction } = jikanRecommendAnimeConstruct({
@@ -345,7 +357,11 @@ export class NextFavoriteStack extends cdk.Stack {
     const { jikanGetTrendAnimeFunction } = jikanGetTrendAnimeConstruct({
       scope: this,
       env,
+      favoriteTableName: favoriteTable.tableName,
+      ignoreTableName: ignoreTable.tableName,
     });
+    favoriteTable.grantReadData(jikanGetTrendAnimeFunction);
+    ignoreTable.grantReadData(jikanGetTrendAnimeFunction);
 
     // Jikan Get Detail Anime construct
     const { jikanGetDetailAnimeFunction } = jikanGetDetailAnimeConstruct({

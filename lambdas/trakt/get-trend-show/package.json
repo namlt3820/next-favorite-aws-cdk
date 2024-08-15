@@ -18,7 +18,9 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.631.0",
     "@aws-sdk/client-secrets-manager": "^3.620.0",
+    "@aws-sdk/lib-dynamodb": "^3.631.0",
     "axios": "^1.7.2",
     "lodash": "^4.17.21"
   }
